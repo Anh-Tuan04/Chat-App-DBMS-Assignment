@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="vi">
+    <head>
+        <meta charset="UTF-8">
+        <title>Message app</title>
+        <link rel="stylesheet" href="/static/message.css">
+    </head>
+
+    <body>
+        <div id="chat-view" class="chat-view">
+            <nav class="chat-header">
+                <div class="avatar-placeholder"></div>
+                <div class="message-header-partner-name">Fren</div>
+            </nav>
+            <div id="messages-container" class="messages-container">
+                <div class="message partner">
+                    <div class="avatar-placeholder"></div>
+                    <div class="message-content partner">Hi!</div>
+                </div>
+                <div class="message user">
+                    <div class="avatar-placeholder"></div>
+                    <div class="message-content user">Hello!</div>
+                </div>
+            </div>
+        </div>
+        <form id="message-form" class="message-form">
+            <input type="text" id="message-input" placeholder="Enter message..." autocomplete="off">
+            <button type="submit">Send</button>
+        </form>
+        <script src="/static/message.js" type="module"></script>
+    </body>
+
+</html>

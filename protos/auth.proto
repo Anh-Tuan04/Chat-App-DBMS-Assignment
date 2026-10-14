@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+service Auth {
+    // Check a username/password pair against the MySQL user table
+    rpc Login (LoginRequest) returns (LoginResponse) {}
+}
+
+message LoginRequest {
+    string username = 1;
+    string password = 2;
+}
+
+message LoginResponse {
+    bool ok = 1;
+}

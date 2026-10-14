@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+service CassandraHandler {
+    // Send a message (senderID, receiverID, content) for the server to add to DB
+    rpc AddMessage (AddMessageRequest) returns (AddMessageRespond) {}
+}
+
+message AddMessageRequest {
+    int64 senderID = 1;
+    int64 receiverID = 2;
+    string content = 3;
+}
+
+message AddMessageRespond {
+    bool ok = 1;
+    string err = 2;
+}
