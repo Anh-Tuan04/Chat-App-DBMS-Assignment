@@ -24,23 +24,29 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x12\x63hat_service.proto\x12\x0c\x63hat.message\"\x91\x01\n\x07Message\x12\x17\n\x0f\x63onversation_id\x18\x01 \x01(\x03\x12\x0e\n\x06\x62ucket\x18\x02 \x01(\x05\x12\x12\n\nmessage_id\x18\x03 \x01(\x03\x12\x11\n\tsender_id\x18\x04 \x01(\x03\x12\x0f\n\x07\x63ontent\x18\x05 \x01(\t\x12\x12\n\ncreated_at\x18\x06 \x01(\x03\x12\x11\n\tedited_at\x18\x07 \x01(\x03\"Q\n\x12SendMessageRequest\x12\x17\n\x0f\x63onversation_id\x18\x01 \x01(\x03\x12\x11\n\tsender_id\x18\x02 \x01(\x03\x12\x0f\n\x07\x63ontent\x18\x03 \x01(\t\"3\n\x13SendMessageResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0b\n\x03\x65rr\x18\x02 \x01(\t\"H\n\x11GetMessageRequest\x12\x17\n\x0f\x63onversation_id\x18\x01 \x01(\x03\x12\r\n\x05limit\x18\x02 \x01(\x05\x12\x0b\n\x03\x65rr\x18\x03 \x01(\t\"_\n\x12GetMessageResponse\x12\'\n\x08messages\x18\x01 \x03(\x0b\x32\x15.chat.message.Message\x12\x13\n\x0bnext_cursor\x18\x02 \x01(\x03\x12\x0b\n\x03\x65rr\x18\x03 \x01(\t2\xb9\x01\n\x0eMessageService\x12T\n\x0bSendMessage\x12 .chat.message.SendMessageRequest\x1a!.chat.message.SendMessageResponse\"\x00\x12Q\n\nGetMessage\x12\x1f.chat.message.GetMessageRequest\x1a .chat.message.GetMessageResponse\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x12\x63hat_service.proto\x12\x0c\x63hat.message\"h\n\x07Message\x12\x12\n\nmessage_id\x18\x03 \x01(\x03\x12\x11\n\tsender_id\x18\x04 \x01(\x03\x12\x0f\n\x07\x63ontent\x18\x05 \x01(\t\x12\x12\n\ncreated_at\x18\x06 \x01(\x03\x12\x11\n\tedited_at\x18\x07 \x01(\x03\"\xc8\x01\n\x0c\x43onversation\x12\x17\n\x0f\x63onversation_id\x18\x01 \x01(\x03\x12\x19\n\x11\x63onversation_type\x18\x02 \x01(\t\x12\x17\n\x0flast_message_id\x18\x03 \x01(\x03\x12\x1c\n\x14last_message_content\x18\x04 \x01(\t\x12\x1e\n\x16last_message_sender_id\x18\x05 \x01(\x03\x12\x17\n\x0flast_message_at\x18\x06 \x01(\x03\x12\x14\n\x0cunread_count\x18\x07 \x01(\x05\"Q\n\x12SendMessageRequest\x12\x17\n\x0f\x63onversation_id\x18\x01 \x01(\x03\x12\x11\n\tsender_id\x18\x02 \x01(\x03\x12\x0f\n\x07\x63ontent\x18\x03 \x01(\t\"3\n\x13SendMessageResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0b\n\x03\x65rr\x18\x02 \x01(\t\"n\n\x18GetMessageForUserRequest\x12\x17\n\x0f\x63onversation_id\x18\x01 \x01(\x03\x12\x0f\n\x07user_id\x18\x02 \x01(\x03\x12\r\n\x05limit\x18\x03 \x01(\x05\x12\x19\n\x11\x62\x65\x66ore_message_id\x18\x04 \x01(\x03\"w\n\x19GetMessageForUserResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\'\n\x08messages\x18\x02 \x03(\x0b\x32\x15.chat.message.Message\x12\x13\n\x0bnext_cursor\x18\x03 \x01(\x03\x12\x0b\n\x03\x65rr\x18\x04 \x01(\t\"/\n\x1cGetConversationByUserRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\x03\"p\n\x1dGetConversationByUserResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x31\n\rconversations\x18\x02 \x03(\x0b\x32\x1a.chat.message.Conversation\x12\x0b\n\x03\x65rr\x18\x03 \x01(\t2\xc2\x02\n\x0eMessageService\x12T\n\x0bSendMessage\x12 .chat.message.SendMessageRequest\x1a!.chat.message.SendMessageResponse\"\x00\x12\x66\n\x11GetMessageForUser\x12&.chat.message.GetMessageForUserRequest\x1a\'.chat.message.GetMessageForUserResponse\"\x00\x12r\n\x15GetConversationByUser\x12*.chat.message.GetConversationByUserRequest\x1a+.chat.message.GetConversationByUserResponse\"\x00\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'chat_service_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_MESSAGE']._serialized_start=37
-  _globals['_MESSAGE']._serialized_end=182
-  _globals['_SENDMESSAGEREQUEST']._serialized_start=184
-  _globals['_SENDMESSAGEREQUEST']._serialized_end=265
-  _globals['_SENDMESSAGERESPONSE']._serialized_start=267
-  _globals['_SENDMESSAGERESPONSE']._serialized_end=318
-  _globals['_GETMESSAGEREQUEST']._serialized_start=320
-  _globals['_GETMESSAGEREQUEST']._serialized_end=392
-  _globals['_GETMESSAGERESPONSE']._serialized_start=394
-  _globals['_GETMESSAGERESPONSE']._serialized_end=489
-  _globals['_MESSAGESERVICE']._serialized_start=492
-  _globals['_MESSAGESERVICE']._serialized_end=677
+  _globals['_MESSAGE']._serialized_start=36
+  _globals['_MESSAGE']._serialized_end=140
+  _globals['_CONVERSATION']._serialized_start=143
+  _globals['_CONVERSATION']._serialized_end=343
+  _globals['_SENDMESSAGEREQUEST']._serialized_start=345
+  _globals['_SENDMESSAGEREQUEST']._serialized_end=426
+  _globals['_SENDMESSAGERESPONSE']._serialized_start=428
+  _globals['_SENDMESSAGERESPONSE']._serialized_end=479
+  _globals['_GETMESSAGEFORUSERREQUEST']._serialized_start=481
+  _globals['_GETMESSAGEFORUSERREQUEST']._serialized_end=591
+  _globals['_GETMESSAGEFORUSERRESPONSE']._serialized_start=593
+  _globals['_GETMESSAGEFORUSERRESPONSE']._serialized_end=712
+  _globals['_GETCONVERSATIONBYUSERREQUEST']._serialized_start=714
+  _globals['_GETCONVERSATIONBYUSERREQUEST']._serialized_end=761
+  _globals['_GETCONVERSATIONBYUSERRESPONSE']._serialized_start=763
+  _globals['_GETCONVERSATIONBYUSERRESPONSE']._serialized_end=875
+  _globals['_MESSAGESERVICE']._serialized_start=878
+  _globals['_MESSAGESERVICE']._serialized_end=1200
 # @@protoc_insertion_point(module_scope)

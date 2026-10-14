@@ -29,10 +29,13 @@ def run():
         # 2. TEST GET MESSAGE (SELECT)
         print("\n--- 2. ĐANG LẤY DANH SÁCH TIN NHẮN (GetMessage) ---")
         try:
-            get_req = chat_service_pb2.GetMessageRequest(
-                conversation_id=conv_id
+            get_req = chat_service_pb2.GetMessageForUserRequest(
+                conversation_id=conv_id,
+                user_id=12453,
+                limit=4,
+                before_message_id=0
             )
-            get_resp = stub.GetMessage(get_req)
+            get_resp = stub.GetMessageForUser(get_req)
 
             if get_resp.err:
                 print(f"Lỗi từ server: {get_resp.err}")
@@ -42,6 +45,22 @@ def run():
                     print(f"  {idx}. [ID: {item.message_id}] [Sender: {item.sender_id}] {item.content}")
                 
                 print(f"   Next Cursor: {get_resp.next_cursor}")
+
+            get_resp2 = stub.GetMessageForUser(chat_service_pb2.GetMessageForUserRequest(
+                            conversation_id=conv_id,
+                            user_id=12453,
+                            limit=4,
+                            before_message_id=get_resp.next_cursor
+                        ))
+            if get_resp2.err:
+                print(f"Lỗi từ server: {get_resp2.err}")
+            else:
+                print(f"Lấy thành công {len(get_resp2.messages)} tin nhắn:")
+                for idx, item in enumerate(get_resp2.messages, 1):
+                    print(f"  {idx}. [ID: {item.message_id}] [Sender: {item.sender_id}] {item.content}")
+                            
+                print(f"   Next Cursor: {get_resp2.next_cursor}")
+
 
         except grpc.RpcError as e:
             print(f"Lỗi gRPC khi GetMessage: {e.code()} - {e.details()}")

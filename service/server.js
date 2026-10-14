@@ -92,18 +92,18 @@ async function sendMessage(call, callback) {
         );
 
         callback(null, {
-            success: 'SUCCESS',
+            success: true,
             err: ""
         });
     } catch (err) {
         callback(null, {
-            success: 'FAILURE',
+            success: false,
             err: err.message
         });
     }
 }
 
-async function getMessage(call, callback) {
+async function getMessageForUser(call, callback) {
     const { conversation_id, limit, before_message_id} = call.request;
 
     const pageSize = limit > 0 ? Math.min(limit, 200) : 50;
@@ -121,7 +121,7 @@ async function getMessage(call, callback) {
                 [conversation_id, b, upper, pageSize - messages.length],
             { prepare: true },
         );
-        for (const row of result.rows) messages.push(rowToMessage(row, conversation_id));
+        for (const row of result.rows) messages.push(rowToMessage(row));
         }
 
         const nextCursor = messages.length === pageSize ? messages[messages.length - 1].message_id : 0;
@@ -173,7 +173,7 @@ async function main() {
 
     server.addService(messageService.service, {
         SendMessage: sendMessage,
-        GetMessage: getMessage,
+        GetMessageForUser: getMessageForUser,
         GetConversationByUser : getConversationByUser
     });
 
