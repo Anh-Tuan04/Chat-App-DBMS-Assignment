@@ -1,1 +1,1 @@
-# Chat-App-DBMS-Assignment-
+# Chat-App-DBMS-Assignment
