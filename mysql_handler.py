@@ -5,8 +5,8 @@ import bcrypt
 import grpc
 import pymysql
 
-import auth_pb2
-import auth_pb2_grpc
+import mysql_handler_pb2
+import mysql_handler_pb2_grpc
 
 # MySQL connection settings. Override with environment variables, e.g. in PowerShell:
 #   $env:MYSQL_PASSWORD = "your-password"
@@ -25,7 +25,7 @@ DB_CONFIG = dict(
 _DUMMY_HASH = bcrypt.hashpw(b'dummy', bcrypt.gensalt())
 
 
-class AuthService(auth_pb2_grpc.AuthServicer):
+class MySQLHandler(mysql_handler_pb2_grpc.MySQLHandlerServicer):
     def Login(self, request, context):
         # 1) Look up the stored hash
         try:
@@ -53,16 +53,16 @@ class AuthService(auth_pb2_grpc.AuthServicer):
 
         ok = row is not None and matched
         print(f'Login {"OK" if ok else "FAILED"} for user {request.username!r}')
-        return auth_pb2.LoginResponse(ok=ok)
+        return mysql_handler_pb2.LoginResponse(ok=ok)
 
 
 def serve():
     port = '50052'
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    auth_pb2_grpc.add_AuthServicer_to_server(AuthService(), server)
+    mysql_handler_pb2_grpc.add_MySQLHandlerServicer_to_server(MySQLHandler(), server)
     server.add_insecure_port('[::]:' + port)
     server.start()
-    print('Auth service started, listening on ' + port)
+    print('MySQL handler started, listening on ' + port)
     server.wait_for_termination()
 
 

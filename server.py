@@ -4,10 +4,10 @@ import secrets
 import grpc
 from flask import Flask, jsonify, redirect, request, send_file, session, url_for
 
-import auth_pb2
-import auth_pb2_grpc
 import cassandra_handler_pb2
 import cassandra_handler_pb2_grpc
+import mysql_handler_pb2
+import mysql_handler_pb2_grpc
 
 app = Flask(__name__)
 
@@ -16,28 +16,36 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY') or secrets.token_hex(32)
 
 
-class AuthServiceUnavailable(Exception):
-    """Raised when the MySQL auth microservice can't be reached."""
+class MySQLServiceUnavailable(Exception):
+    """Raised when the MySQL microservice can't be reached."""
 
 
 class CassandraServiceUnavailable(Exception):
     """Raied when the Cassandra microservice can't be reached."""
 
 
-def authenticate(username, password):
-    """Ask the auth microservice whether these credentials are valid.
+# gRPC channels (and the stubs built on them) are thread-safe and meant to be
+# shared, so they are created once here instead of once per request. Channels
+# connect lazily, so the handlers don't need to be up when this file is loaded.
+mysql_channel = grpc.insecure_channel('localhost:50052')
+mysql_stub = mysql_handler_pb2_grpc.MySQLHandlerStub(mysql_channel)
 
-    Returns True / False. Raises AuthServiceUnavailable if the service is down.
+cassandra_channel = grpc.insecure_channel('localhost:50051')
+cassandra_stub = cassandra_handler_pb2_grpc.CassandraHandlerStub(cassandra_channel)
+
+
+def authenticate(username, password):
+    """Ask the MySQL handler whether these credentials are valid.
+
+    Returns True / False. Raises MySQLServiceUnavailable if the service is down.
     """
     try:
-        with grpc.insecure_channel('localhost:50052') as channel:
-            stub = auth_pb2_grpc.AuthStub(channel)
-            response = stub.Login(
-                auth_pb2.LoginRequest(username=username, password=password),
-                timeout=5)    # don't let a hung auth service block the request
-            return response.ok
+        response = mysql_stub.Login(
+            mysql_handler_pb2.LoginRequest(username=username, password=password),
+            timeout=5)    # don't let a hung MySQL handler block the request
+        return response.ok
     except grpc.RpcError as err:
-        raise AuthServiceUnavailable() from err
+        raise MySQLServiceUnavailable() from err
 
 
 @app.route('/')
@@ -57,8 +65,8 @@ def login():
 
     try:
         ok = authenticate(username, password)
-    except AuthServiceUnavailable:
-        return jsonify(status='ERROR'), 503     # auth service unavailable
+    except MySQLServiceUnavailable:
+        return jsonify(status='ERROR'), 503     # MySQL handler unavailable
 
     if not ok:
         return jsonify(status='ERROR'), 401     # invalid credentials
@@ -86,19 +94,18 @@ def handle_incoming_message():
 
     # Send request to handler
     try:
-        with grpc.insecure_channel("localhost:50051") as channel:
-            stub = cassandra_handler_pb2_grpc.CassandraHandlerStub(channel)
-            response = stub.AddMessage(cassandra_handler_pb2.AddMessageRequest(
-                senderID=69420,
-                receiverID=112233,
-                content=data['content']
-            ))
-            if (response.ok):
-                print("Client received message successfully")
-            else:
-                print(f'error: {response.err}')
-
+        response = cassandra_stub.AddMessage(cassandra_handler_pb2.AddMessageRequest(
+            senderID=69420,
+            receiverID=112233,
+            content=data['content']
+        ))
+        if (response.ok):
+            print("Client received message successfully")
             return jsonify(status='SUCCESS'), 200
+
+        # The handler was reached but failed to store the message
+        print(f'error: {response.err}')
+        return jsonify(status='ERROR'), 500
     except grpc.RpcError:
         return jsonify(status='ERROR'), 503
 

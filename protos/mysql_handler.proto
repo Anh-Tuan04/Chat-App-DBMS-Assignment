@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-service Auth {
+service MySQLHandler {
     // Check a username/password pair against the MySQL user table
     rpc Login (LoginRequest) returns (LoginResponse) {}
 }
