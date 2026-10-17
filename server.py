@@ -37,13 +37,14 @@ cassandra_stub = cassandra_handler_pb2_grpc.CassandraHandlerStub(cassandra_chann
 def authenticate(username, password):
     """Ask the MySQL handler whether these credentials are valid.
 
-    Returns True / False. Raises MySQLServiceUnavailable if the service is down.
+    Returns the user's user_id if they are valid, or None if they are not.
+    Raises AuthServiceUnavailable if the service is down.
     """
     try:
         response = mysql_stub.Login(
             mysql_handler_pb2.LoginRequest(username=username, password=password),
             timeout=5)    # don't let a hung MySQL handler block the request
-        return response.ok
+        return response.user_id if response.ok else None
     except grpc.RpcError as err:
         raise MySQLServiceUnavailable() from err
 
@@ -64,15 +65,16 @@ def login():
         return jsonify(status='ERROR'), 400     # missing credentials
 
     try:
-        ok = authenticate(username, password)
+        user_id = authenticate(username, password)
     except MySQLServiceUnavailable:
         return jsonify(status='ERROR'), 503     # MySQL handler unavailable
 
-    if not ok:
+    if user_id is None:
         return jsonify(status='ERROR'), 401     # invalid credentials
 
     # Remember who this browser is, so /app can check it later
     session['username'] = username
+    session['user_id'] = user_id
     return jsonify(status='SUCCESS', redirect=url_for('message_app')), 200
 
 

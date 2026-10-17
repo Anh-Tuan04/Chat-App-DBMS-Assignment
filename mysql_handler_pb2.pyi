@@ -13,7 +13,9 @@ class LoginRequest(_message.Message):
     def __init__(self, username: _Optional[str] = ..., password: _Optional[str] = ...) -> None: ...
 
 class LoginResponse(_message.Message):
-    __slots__ = ("ok",)
+    __slots__ = ("ok", "user_id")
     OK_FIELD_NUMBER: _ClassVar[int]
+    USER_ID_FIELD_NUMBER: _ClassVar[int]
     ok: bool
-    def __init__(self, ok: _Optional[bool] = ...) -> None: ...
+    user_id: int
+    def __init__(self, ok: _Optional[bool] = ..., user_id: _Optional[int] = ...) -> None: ...

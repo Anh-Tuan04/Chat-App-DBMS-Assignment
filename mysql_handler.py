@@ -33,7 +33,7 @@ class MySQLHandler(mysql_handler_pb2_grpc.MySQLHandlerServicer):
             try:
                 with conn.cursor() as cursor:
                     cursor.execute(
-                        'SELECT password_hash FROM users WHERE username = %s',
+                        'SELECT user_id, password_hash FROM users WHERE username = %s',
                         (request.username,))
                     row = cursor.fetchone()
             finally:
@@ -44,7 +44,7 @@ class MySQLHandler(mysql_handler_pb2_grpc.MySQLHandlerServicer):
             context.abort(grpc.StatusCode.UNAVAILABLE, 'database unavailable')
 
         # 2) Compare the password with the bcrypt hash
-        stored = row[0].encode('utf-8') if row else _DUMMY_HASH
+        stored = row[1].encode('utf-8') if row else _DUMMY_HASH
         try:
             matched = bcrypt.checkpw(request.password.encode('utf-8'), stored)
         except ValueError:
@@ -53,7 +53,7 @@ class MySQLHandler(mysql_handler_pb2_grpc.MySQLHandlerServicer):
 
         ok = row is not None and matched
         print(f'Login {"OK" if ok else "FAILED"} for user {request.username!r}')
-        return mysql_handler_pb2.LoginResponse(ok=ok)
+        return mysql_handler_pb2.LoginResponse(ok=ok, user_id=row[0] if ok else 0)
 
 
 def serve():

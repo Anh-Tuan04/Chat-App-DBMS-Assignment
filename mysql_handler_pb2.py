@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x13mysql_handler.proto\"2\n\x0cLoginRequest\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x10\n\x08password\x18\x02 \x01(\t\"\x1b\n\rLoginResponse\x12\n\n\x02ok\x18\x01 \x01(\x08\x32\x38\n\x0cMySQLHandler\x12(\n\x05Login\x12\r.LoginRequest\x1a\x0e.LoginResponse\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x13mysql_handler.proto\"2\n\x0cLoginRequest\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x10\n\x08password\x18\x02 \x01(\t\",\n\rLoginResponse\x12\n\n\x02ok\x18\x01 \x01(\x08\x12\x0f\n\x07user_id\x18\x02 \x01(\x03\x32\x38\n\x0cMySQLHandler\x12(\n\x05Login\x12\r.LoginRequest\x1a\x0e.LoginResponse\"\x00\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -34,7 +34,7 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_LOGINREQUEST']._serialized_start=23
   _globals['_LOGINREQUEST']._serialized_end=73
   _globals['_LOGINRESPONSE']._serialized_start=75
-  _globals['_LOGINRESPONSE']._serialized_end=102
-  _globals['_MYSQLHANDLER']._serialized_start=104
-  _globals['_MYSQLHANDLER']._serialized_end=160
+  _globals['_LOGINRESPONSE']._serialized_end=119
+  _globals['_MYSQLHANDLER']._serialized_start=121
+  _globals['_MYSQLHANDLER']._serialized_end=177
 # @@protoc_insertion_point(module_scope)
