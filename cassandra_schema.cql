@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS messages_by_conversation (
     content TEXT,
     created_at TIMESTAMP,
     edited_at TIMESTAMP,
+    deleted_by SET<BIGINT>,
     PRIMARY KEY ((conversation_id, bucket), message_id)
 ) WITH CLUSTERING ORDER BY (message_id DESC);
 
@@ -42,10 +43,3 @@ CREATE TABLE IF NOT EXISTS user_conversations (
     PRIMARY KEY (user_id, last_message_at, conversation_id)
 ) WITH CLUSTERING ORDER BY (last_message_at DESC, conversation_id DESC);
 
-CREATE TABLE IF NOT EXISTS deleted_messages_by_user (
-    user_id BIGINT,
-    conversation_id BIGINT,
-    message_id BIGINT,
-    deleted_at TIMESTAMP,
-    PRIMARY KEY ((user_id, conversation_id), message_id)
-);

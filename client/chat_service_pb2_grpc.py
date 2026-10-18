@@ -49,6 +49,16 @@ class MessageServiceStub:
                 request_serializer=chat__service__pb2.GetConversationByUserRequest.SerializeToString,
                 response_deserializer=chat__service__pb2.GetConversationByUserResponse.FromString,
                 _registered_method=True)
+        self.DeleteMessageForUser = channel.unary_unary(
+                '/chat.message.MessageService/DeleteMessageForUser',
+                request_serializer=chat__service__pb2.DeleteMessageRequest.SerializeToString,
+                response_deserializer=chat__service__pb2.DeleteMessageResponse.FromString,
+                _registered_method=True)
+        self.RecallMessageForSender = channel.unary_unary(
+                '/chat.message.MessageService/RecallMessageForSender',
+                request_serializer=chat__service__pb2.RecallMessageForSenderReq.SerializeToString,
+                response_deserializer=chat__service__pb2.RecallMessageForSenderResp.FromString,
+                _registered_method=True)
 
 
 class MessageServiceServicer:
@@ -72,6 +82,18 @@ class MessageServiceServicer:
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def DeleteMessageForUser(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def RecallMessageForSender(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_MessageServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -89,6 +111,16 @@ def add_MessageServiceServicer_to_server(servicer, server):
                     servicer.GetConversationByUser,
                     request_deserializer=chat__service__pb2.GetConversationByUserRequest.FromString,
                     response_serializer=chat__service__pb2.GetConversationByUserResponse.SerializeToString,
+            ),
+            'DeleteMessageForUser': grpc.unary_unary_rpc_method_handler(
+                    servicer.DeleteMessageForUser,
+                    request_deserializer=chat__service__pb2.DeleteMessageRequest.FromString,
+                    response_serializer=chat__service__pb2.DeleteMessageResponse.SerializeToString,
+            ),
+            'RecallMessageForSender': grpc.unary_unary_rpc_method_handler(
+                    servicer.RecallMessageForSender,
+                    request_deserializer=chat__service__pb2.RecallMessageForSenderReq.FromString,
+                    response_serializer=chat__service__pb2.RecallMessageForSenderResp.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -172,6 +204,60 @@ class MessageService:
             '/chat.message.MessageService/GetConversationByUser',
             chat__service__pb2.GetConversationByUserRequest.SerializeToString,
             chat__service__pb2.GetConversationByUserResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def DeleteMessageForUser(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/chat.message.MessageService/DeleteMessageForUser',
+            chat__service__pb2.DeleteMessageRequest.SerializeToString,
+            chat__service__pb2.DeleteMessageResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def RecallMessageForSender(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/chat.message.MessageService/RecallMessageForSender',
+            chat__service__pb2.RecallMessageForSenderReq.SerializeToString,
+            chat__service__pb2.RecallMessageForSenderResp.FromString,
             options,
             channel_credentials,
             insecure,

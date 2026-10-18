@@ -95,3 +95,39 @@ class GetConversationByUserResponse(_message.Message):
     conversations: _containers.RepeatedCompositeFieldContainer[Conversation]
     err: str
     def __init__(self, success: _Optional[bool] = ..., conversations: _Optional[_Iterable[_Union[Conversation, _Mapping]]] = ..., err: _Optional[str] = ...) -> None: ...
+
+class DeleteMessageRequest(_message.Message):
+    __slots__ = ("conversation_id", "message_id", "user_id")
+    CONVERSATION_ID_FIELD_NUMBER: _ClassVar[int]
+    MESSAGE_ID_FIELD_NUMBER: _ClassVar[int]
+    USER_ID_FIELD_NUMBER: _ClassVar[int]
+    conversation_id: int
+    message_id: int
+    user_id: int
+    def __init__(self, conversation_id: _Optional[int] = ..., message_id: _Optional[int] = ..., user_id: _Optional[int] = ...) -> None: ...
+
+class DeleteMessageResponse(_message.Message):
+    __slots__ = ("success", "err")
+    SUCCESS_FIELD_NUMBER: _ClassVar[int]
+    ERR_FIELD_NUMBER: _ClassVar[int]
+    success: bool
+    err: str
+    def __init__(self, success: _Optional[bool] = ..., err: _Optional[str] = ...) -> None: ...
+
+class RecallMessageForSenderReq(_message.Message):
+    __slots__ = ("message_id", "conversation_id", "req_id")
+    MESSAGE_ID_FIELD_NUMBER: _ClassVar[int]
+    CONVERSATION_ID_FIELD_NUMBER: _ClassVar[int]
+    REQ_ID_FIELD_NUMBER: _ClassVar[int]
+    message_id: int
+    conversation_id: int
+    req_id: int
+    def __init__(self, message_id: _Optional[int] = ..., conversation_id: _Optional[int] = ..., req_id: _Optional[int] = ...) -> None: ...
+
+class RecallMessageForSenderResp(_message.Message):
+    __slots__ = ("success", "err")
+    SUCCESS_FIELD_NUMBER: _ClassVar[int]
+    ERR_FIELD_NUMBER: _ClassVar[int]
+    success: bool
+    err: str
+    def __init__(self, success: _Optional[bool] = ..., err: _Optional[str] = ...) -> None: ...

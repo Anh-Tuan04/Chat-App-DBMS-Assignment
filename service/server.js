@@ -17,11 +17,6 @@ const loadedProto = grpc.loadPackageDefinition(packageDefinition);
 
 const messageService = loadedProto.chat.message.MessageService;
 
-
-
-
-
-
 // Set bucket by week
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -58,9 +53,9 @@ function rowToMessage(row) {
     edited_at: row.edited_at ? row.edited_at.getTime() : 0,
   };
 }
+
 function rowToConversation(row) {
   return {
-
     conversation_id: toNumber(row.conversation_id),
     conversation_type: row.conversation_type || '',
     last_message_id: toNumber(row.last_message_id),
@@ -71,57 +66,76 @@ function rowToConversation(row) {
   };
 }
 
+function isHiddenFor(row, userId) {
+    if (!row.deleted_by) return false;
+    for (const v of row.deleted_by) {
+        if (toNumber(v) === Number(userId)) return true;
+    }
+    return false;
+}
+
 async function sendMessage(call, callback) {
     const { conversation_id, sender_id, content } = call.request;
-    
-    
-    const message_id = Date.now(); 
+
+    const message_id = Date.now();
     const bucket = bucketOf(message_id);
 
     const query = `
-        INSERT INTO messages_by_conversation 
-        (conversation_id, bucket, message_id, sender_id, content, created_at) 
+        INSERT INTO messages_by_conversation
+        (conversation_id, bucket, message_id, sender_id, content, created_at)
         VALUES (?, ?, ?, ?, ?, toTimestamp(now()))
     `;
 
     try {
         await cassandraClient.execute(
-            query, 
-            [conversation_id, bucket, message_id, sender_id, content], 
+            query,
+            [conversation_id, bucket, message_id, sender_id, content],
             { prepare: true }
         );
 
-        callback(null, {
-            success: true,
-            err: ""
-        });
+        callback(null, { success: true, err: '' });
     } catch (err) {
-        callback(null, {
-            success: false,
-            err: err.message
-        });
+        callback(null, { success: false, err: err.message });
     }
 }
 
-async function getMessageForUser(call, callback) {
-    const { conversation_id, limit, before_message_id} = call.request;
+async function getMessage(call, callback) {
+    const { conversation_id, user_id, limit, before_message_id } = call.request;
 
     const pageSize = limit > 0 ? Math.min(limit, 200) : 50;
     const upper = before_message_id > 0 ? before_message_id : Date.now() + HOUR_MS;
-    
+
     const startBucket = bucketOf(upper - 1);
     const messages = [];
     try {
         for (let b = startBucket; b > startBucket - MAX_WEEKS && messages.length < pageSize; b--) {
-            const result = await cassandraClient.execute(
-                `SELECT message_id, sender_id, content, created_at, edited_at, bucket
-                FROM messages_by_conversation
-                WHERE conversation_id = ? AND bucket = ? AND message_id < ?
-                LIMIT ?`,
-                [conversation_id, b, upper, pageSize - messages.length],
-            { prepare: true },
-        );
-        for (const row of result.rows) messages.push(rowToMessage(row));
+            let before = upper;
+            let exhausted = false;
+
+            while (messages.length < pageSize && !exhausted) {
+                const limitNow = pageSize - messages.length;
+                const result = await cassandraClient.execute(
+                    `SELECT message_id, sender_id, content, created_at, edited_at, bucket, deleted_by
+                    FROM messages_by_conversation
+                    WHERE conversation_id = ? AND bucket = ? AND message_id < ?
+                    LIMIT ?`,
+                    [conversation_id, b, before, limitNow],
+                    { prepare: true },
+                );
+
+                for (const row of result.rows) {
+                    if (row.sender_id === null || row.sender_id === undefined) continue;
+                    if (isHiddenFor(row, user_id)) continue;
+
+                    messages.push(rowToMessage(row));
+                }
+
+                if (result.rows.length < limitNow) {
+                    exhausted = true;
+                } else {
+                    before = toNumber(result.rows[result.rows.length - 1].message_id);
+                }
+            }
         }
 
         const nextCursor = messages.length === pageSize ? messages[messages.length - 1].message_id : 0;
@@ -165,6 +179,73 @@ async function getConversationByUser(call, callback) {
     }
 }
 
+
+async function deleteMessageForUser(call, callback) {
+    const { conversation_id, message_id, user_id } = call.request;
+    if (!user_id || !message_id) {
+        return callback(null, { success: false, err: 'Lỗi' });
+    }
+
+    const bucket = bucketOf(message_id);
+    try {
+        // Kiểm tra tin tồn tại trước khi UPDATE
+        const exists = await cassandraClient.execute(
+            `SELECT sender_id FROM messages_by_conversation
+            WHERE conversation_id = ? AND bucket = ? AND message_id = ?`,
+            [conversation_id, bucket, message_id],
+            { prepare: true },
+        );
+        if (exists.rows.length === 0) {
+            return callback(null, { success: false, err: 'Không tìm thấy tin nhắn' });
+        }
+
+        await cassandraClient.execute(
+            `UPDATE messages_by_conversation
+            SET deleted_by = deleted_by + ?
+            WHERE conversation_id = ? AND bucket = ? AND message_id = ?`,
+            [[user_id], conversation_id, bucket, message_id],
+            { prepare: true },
+        );
+
+        callback(null, { success: true, err: '' });
+    } catch (err) {
+        callback(null, { success: false, err: `INTERNAL: ${err.message}` });
+    }
+}
+
+async function recallMessageForSender(call, callback) {
+    const { message_id, conversation_id, req_id } = call.request;
+    const bucket = bucketOf(message_id);
+
+    try {
+        // 1. Kiểm tra tin nhắn tồn tại và người yêu cầu là người gửi
+        const res = await cassandraClient.execute(
+            `SELECT sender_id FROM messages_by_conversation
+            WHERE conversation_id = ? AND bucket = ? AND message_id = ?`,
+            [conversation_id, bucket, message_id],
+            { prepare: true },
+        );
+        if (res.rows.length === 0) {
+            return callback(null, { success: false, err: "Không tìm thấy tin nhắn" });
+        }
+        if (toNumber(res.rows[0].sender_id) !== Number(req_id)) {
+            return callback(null, { success: false, err: "Chỉ người gửi mới được thu hồi" });
+        }
+
+        // 2. Xóa cả dòng: trạng thái deleted_by của mọi user đi theo
+        await cassandraClient.execute(
+            `DELETE FROM messages_by_conversation
+            WHERE conversation_id = ? AND bucket = ? AND message_id = ?`,
+            [conversation_id, bucket, message_id],
+            { prepare: true },
+        );
+
+        callback(null, { success: true, err: "Xóa thành công" });
+    } catch (err) {
+        callback(null, { success: false, err: `INTERNAL: ${err.message}` });
+    }
+}
+
 async function main() {
     await cassandraClient.connect();
     console.log('Đã kết nối Database Cassandra!');
@@ -173,8 +254,10 @@ async function main() {
 
     server.addService(messageService.service, {
         SendMessage: sendMessage,
-        GetMessageForUser: getMessageForUser,
-        GetConversationByUser : getConversationByUser
+        GetMessageForUser: getMessage,
+        GetConversationByUser: getConversationByUser,
+        DeleteMessageForUser: deleteMessageForUser,
+        RecallMessageForSender: recallMessageForSender,
     });
 
     server.bindAsync('0.0.0.0:50051', grpc.ServerCredentials.createInsecure(), (err, port) => {
