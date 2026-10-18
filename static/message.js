@@ -10,9 +10,13 @@ document.getElementById('message-form').addEventListener('submit', async (e) => 
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ content: message })
         });
-        const result = await response.json();
+        if (response.status === 401) {
+            // The session is gone (e.g. the server restarted): sign in again
+            window.location.href = '/';
+            return;
+        }
 
-        if (response.ok && result.status === 'SUCCESS') {
+        if (response.ok) {
             const container = document.getElementById('messages-container');
 
             const wrapper = document.createElement('div');
@@ -30,7 +34,7 @@ document.getElementById('message-form').addEventListener('submit', async (e) => 
             container.scrollTop = container.scrollHeight;
             messageInput.value = '';
         } else {
-            console.error('Server did not return SUCCESS:', response.status, result);
+            console.error('Server did not accept the message:', response.status);
         }
     } catch (err) {
         console.error('Could not reach server:', err);

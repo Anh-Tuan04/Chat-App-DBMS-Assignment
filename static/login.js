@@ -18,10 +18,10 @@ form.addEventListener('submit', async (event) => {
                 password: passwordInput.value
             })
         });
-        const result = await response.json();
 
-        if (response.ok && result.status === 'SUCCESS') {
+        if (response.ok) {
             // Server accepted the login, go to the app page
+            const result = await response.json();
             window.location.href = result.redirect;
             return;
         }

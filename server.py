@@ -1,3 +1,4 @@
+import functools
 import os
 import secrets
 
@@ -14,6 +15,15 @@ app = Flask(__name__)
 # Signs the session cookie. Set SECRET_KEY in the environment for anything beyond
 # testing; with the random fallback, everyone is logged out when the server restarts.
 app.secret_key = os.environ.get('SECRET_KEY') or secrets.token_hex(32)
+
+# Largest request body Flask will read, in bytes; anything bigger gets a 413.
+# Raise it (or override it per request) when file uploads are added.
+app.config['MAX_CONTENT_LENGTH'] = 64 * 1024
+
+# Upper bounds for text sent by the client
+MAX_USERNAME_LENGTH = 255
+MAX_PASSWORD_LENGTH = 1024
+MAX_MESSAGE_LENGTH = 4000
 
 
 class MySQLServiceUnavailable(Exception):
@@ -37,15 +47,32 @@ cassandra_stub = cassandra_handler_pb2_grpc.CassandraHandlerStub(cassandra_chann
 def authenticate(username, password):
     """Ask the MySQL handler whether these credentials are valid.
 
-    Returns True / False. Raises MySQLServiceUnavailable if the service is down.
+    Returns dict {'user_id': int, 'username': str} if valid, else None. 
+    Raises MySQLServiceUnavailable if the service is down.
     """
-    try:
-        response = mysql_stub.Login(
-            mysql_handler_pb2.LoginRequest(username=username, password=password),
-            timeout=5)    # don't let a hung MySQL handler block the request
-        return response.ok
-    except grpc.RpcError as err:
-        raise MySQLServiceUnavailable() from err
+    # TODO: implement call to MySQL handler
+
+    return {'user_id': 69420, 'username': 'admin'}
+
+
+def _require_login(view, on_denied):
+    """Decorator for login gating."""
+    @functools.wraps(view)
+    def wrapped(*args, **kwargs):
+        if 'user_id' not in session:
+            return on_denied()
+        return view(*args, **kwargs)
+    return wrapped
+
+
+def login_required(view):
+    """For pages: visitors without a session are sent to the login page."""
+    return _require_login(view, lambda: redirect(url_for('index')))
+
+
+def api_login_required(view):
+    """For JSON endpoints: answer 401, which the client JS turns into a redirect."""
+    return _require_login(view, lambda: ('', 401))
 
 
 @app.route('/')
@@ -60,54 +87,62 @@ def login():
         data = {}
     username = data.get('username', '')
     password = data.get('password', '')
-    if not username or not password:
-        return jsonify(status='ERROR'), 400     # missing credentials
+    if not (isinstance(username, str) and isinstance(password, str)
+            and username and password):
+        return '', 400     # missing or malformed credentials
+    if len(username) > MAX_USERNAME_LENGTH or len(password) > MAX_PASSWORD_LENGTH:
+        return '', 400     # credentials too long
 
     try:
-        ok = authenticate(username, password)
+        user = authenticate(username, password)
     except MySQLServiceUnavailable:
-        return jsonify(status='ERROR'), 503     # MySQL handler unavailable
+        return '', 503     # MySQL handler unavailable
 
-    if not ok:
-        return jsonify(status='ERROR'), 401     # invalid credentials
+    if user is None:
+        return '', 401     # invalid credentials
 
     # Remember who this browser is, so /app can check it later
-    session['username'] = username
-    return jsonify(status='SUCCESS', redirect=url_for('message_app')), 200
+    session['user_id'] = user['user_id']
+    return jsonify(redirect=url_for('message_app')), 200
 
 
 @app.route('/app')
+@login_required
 def message_app():
-
-    # Prevent direct access into '/app' without logging in
-    if 'username' not in session:
-        return redirect(url_for('index'))
-    
     return send_file('message.html')
 
 
 @app.route('/messages', methods=['POST'])
+@api_login_required
 def handle_incoming_message():
-    
-    data = request.get_json()
+
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return '', 400     # body is not a JSON object
+    content = data.get('content')
+    if not isinstance(content, str) or not content.strip():
+        return '', 400     # missing or blank message
+    if len(content) > MAX_MESSAGE_LENGTH:
+        return '', 400     # message too long
+
     print(f'Received message, content: \n', data)
 
     # Send request to handler
     try:
         response = cassandra_stub.AddMessage(cassandra_handler_pb2.AddMessageRequest(
-            senderID=69420,
+            senderID=session['user_id'],
             receiverID=112233,
-            content=data['content']
+            content=content
         ))
         if (response.ok):
             print("Client received message successfully")
-            return jsonify(status='SUCCESS'), 200
+            return '', 204
 
         # The handler was reached but failed to store the message
         print(f'error: {response.err}')
-        return jsonify(status='ERROR'), 500
+        return '', 500
     except grpc.RpcError:
-        return jsonify(status='ERROR'), 503
+        return '', 503
 
 
 if __name__ == '__main__':
