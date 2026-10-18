@@ -51,8 +51,18 @@ def authenticate(username, password):
     Raises MySQLServiceUnavailable if the service is down.
     """
     # TODO: implement call to MySQL handler
-
-    return {'user_id': 69420, 'username': 'admin'}
+    try:
+        response = mysql_stub.Login(
+            mysql_handler_pb2.LoginRequest(username=username, password=password),
+            timeout=5)    # don't let a hung MySQL handler block the request
+        if response.ok:
+            return {
+                'user_id': response.user_id,
+                'username': username
+            }
+        return None
+    except grpc.RpcError as err:
+        raise MySQLServiceUnavailable() from err
 
 
 def _require_login(view, on_denied):
