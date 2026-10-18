@@ -1,17 +1,86 @@
 syntax = "proto3";
 
-service CassandraHandler {
-    // Send a message (senderID, receiverID, content) for the server to add to DB
-    rpc AddMessage (AddMessageRequest) returns (AddMessageRespond) {}
+package chat.message;
+
+service MessageService {
+    rpc SendMessage (SendMessageRequest) returns (SendMessageResponse) {}
+    rpc GetMessageForUser (GetMessageForUserRequest) returns (GetMessageForUserResponse) {}
+    rpc GetConversationByUser (GetConversationByUserRequest) returns (GetConversationByUserResponse) {}
+    rpc DeleteMessageForUser (DeleteMessageRequest) returns (DeleteMessageResponse) {}
+    rpc RecallMessageForSender (RecallMessageForSenderReq) returns (RecallMessageForSenderResp) {}
 }
 
-message AddMessageRequest {
-    int64 senderID = 1;
-    int64 receiverID = 2;
+message Message {
+    int64 message_id = 3;
+    int64 sender_id = 4;
+    string content = 5;
+    int64 created_at = 6;
+    int64 edited_at = 7;
+}
+message Conversation {
+    int64 conversation_id = 1;
+    string conversation_type = 2;
+    int64 last_message_id = 3;
+    string last_message_content = 4;
+    int64 last_message_sender_id = 5;
+    int64 last_message_at = 6;
+    int32 unread_count = 7;
+}
+
+
+message SendMessageRequest {
+    int64 conversation_id = 1;
+    int64 sender_id = 2;
     string content = 3;
 }
 
-message AddMessageRespond {
-    bool ok = 1;
+message SendMessageResponse {
+    bool success = 1;
+    string err = 2;
+}
+message GetMessageForUserRequest {
+    int64 conversation_id = 1;
+    int64 user_id = 2;
+    int32 limit = 3;
+    int64 before_message_id = 4; // = 0 => hiện tại
+}
+
+message GetMessageForUserResponse {
+    bool success = 1;
+    repeated Message messages = 2;
+    int64 next_cursor = 3;
+    string err = 4;
+}
+
+
+message GetConversationByUserRequest {
+    int64 user_id = 1;
+}
+message GetConversationByUserResponse {
+    bool success = 1;
+    repeated Conversation conversations = 2;
+    string err = 3;
+}
+
+
+message DeleteMessageRequest {
+    int64 conversation_id = 1;
+    int64 message_id =2;
+    int64 user_id = 3;
+}
+
+message DeleteMessageResponse {
+    bool success = 1;
+    string err = 2;
+}
+
+message RecallMessageForSenderReq {
+    int64 message_id = 1;
+    int64 conversation_id = 2;
+    int64 req_id = 3;
+}
+
+message RecallMessageForSenderResp {
+    bool success = 1;
     string err = 2;
 }
