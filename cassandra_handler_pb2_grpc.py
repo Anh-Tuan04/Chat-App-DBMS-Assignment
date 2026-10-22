@@ -25,7 +25,7 @@ if _version_not_supported:
     )
 
 
-class CassandraHandlerStub:
+class MessageServiceStub:
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -34,44 +34,107 @@ class CassandraHandlerStub:
         Args:
             channel: A grpc.Channel.
         """
-        self.AddMessage = channel.unary_unary(
-                '/CassandraHandler/AddMessage',
-                request_serializer=cassandra__handler__pb2.AddMessageRequest.SerializeToString,
-                response_deserializer=cassandra__handler__pb2.AddMessageRespond.FromString,
+        self.SendMessage = channel.unary_unary(
+                '/chat.message.MessageService/SendMessage',
+                request_serializer=cassandra__handler__pb2.SendMessageRequest.SerializeToString,
+                response_deserializer=cassandra__handler__pb2.SendMessageResponse.FromString,
+                _registered_method=True)
+        self.GetMessageForUser = channel.unary_unary(
+                '/chat.message.MessageService/GetMessageForUser',
+                request_serializer=cassandra__handler__pb2.GetMessageForUserRequest.SerializeToString,
+                response_deserializer=cassandra__handler__pb2.GetMessageForUserResponse.FromString,
+                _registered_method=True)
+        self.GetConversationByUser = channel.unary_unary(
+                '/chat.message.MessageService/GetConversationByUser',
+                request_serializer=cassandra__handler__pb2.GetConversationByUserRequest.SerializeToString,
+                response_deserializer=cassandra__handler__pb2.GetConversationByUserResponse.FromString,
+                _registered_method=True)
+        self.DeleteMessageForUser = channel.unary_unary(
+                '/chat.message.MessageService/DeleteMessageForUser',
+                request_serializer=cassandra__handler__pb2.DeleteMessageRequest.SerializeToString,
+                response_deserializer=cassandra__handler__pb2.DeleteMessageResponse.FromString,
+                _registered_method=True)
+        self.RecallMessageForSender = channel.unary_unary(
+                '/chat.message.MessageService/RecallMessageForSender',
+                request_serializer=cassandra__handler__pb2.RecallMessageForSenderReq.SerializeToString,
+                response_deserializer=cassandra__handler__pb2.RecallMessageForSenderResp.FromString,
                 _registered_method=True)
 
 
-class CassandraHandlerServicer:
+class MessageServiceServicer:
     """Missing associated documentation comment in .proto file."""
 
-    def AddMessage(self, request, context):
-        """Send a message (senderID, receiverID, content) for the server to add to DB
-        """
+    def SendMessage(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetMessageForUser(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetConversationByUser(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def DeleteMessageForUser(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def RecallMessageForSender(self, request, context):
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
 
-def add_CassandraHandlerServicer_to_server(servicer, server):
+def add_MessageServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'AddMessage': grpc.unary_unary_rpc_method_handler(
-                    servicer.AddMessage,
-                    request_deserializer=cassandra__handler__pb2.AddMessageRequest.FromString,
-                    response_serializer=cassandra__handler__pb2.AddMessageRespond.SerializeToString,
+            'SendMessage': grpc.unary_unary_rpc_method_handler(
+                    servicer.SendMessage,
+                    request_deserializer=cassandra__handler__pb2.SendMessageRequest.FromString,
+                    response_serializer=cassandra__handler__pb2.SendMessageResponse.SerializeToString,
+            ),
+            'GetMessageForUser': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetMessageForUser,
+                    request_deserializer=cassandra__handler__pb2.GetMessageForUserRequest.FromString,
+                    response_serializer=cassandra__handler__pb2.GetMessageForUserResponse.SerializeToString,
+            ),
+            'GetConversationByUser': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetConversationByUser,
+                    request_deserializer=cassandra__handler__pb2.GetConversationByUserRequest.FromString,
+                    response_serializer=cassandra__handler__pb2.GetConversationByUserResponse.SerializeToString,
+            ),
+            'DeleteMessageForUser': grpc.unary_unary_rpc_method_handler(
+                    servicer.DeleteMessageForUser,
+                    request_deserializer=cassandra__handler__pb2.DeleteMessageRequest.FromString,
+                    response_serializer=cassandra__handler__pb2.DeleteMessageResponse.SerializeToString,
+            ),
+            'RecallMessageForSender': grpc.unary_unary_rpc_method_handler(
+                    servicer.RecallMessageForSender,
+                    request_deserializer=cassandra__handler__pb2.RecallMessageForSenderReq.FromString,
+                    response_serializer=cassandra__handler__pb2.RecallMessageForSenderResp.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'CassandraHandler', rpc_method_handlers)
+            'chat.message.MessageService', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('CassandraHandler', rpc_method_handlers)
+    server.add_registered_method_handlers('chat.message.MessageService', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
-class CassandraHandler:
+class MessageService:
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
-    def AddMessage(request,
+    def SendMessage(request,
             target,
             options=(),
             channel_credentials=None,
@@ -84,9 +147,117 @@ class CassandraHandler:
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/CassandraHandler/AddMessage',
-            cassandra__handler__pb2.AddMessageRequest.SerializeToString,
-            cassandra__handler__pb2.AddMessageRespond.FromString,
+            '/chat.message.MessageService/SendMessage',
+            cassandra__handler__pb2.SendMessageRequest.SerializeToString,
+            cassandra__handler__pb2.SendMessageResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetMessageForUser(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/chat.message.MessageService/GetMessageForUser',
+            cassandra__handler__pb2.GetMessageForUserRequest.SerializeToString,
+            cassandra__handler__pb2.GetMessageForUserResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetConversationByUser(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/chat.message.MessageService/GetConversationByUser',
+            cassandra__handler__pb2.GetConversationByUserRequest.SerializeToString,
+            cassandra__handler__pb2.GetConversationByUserResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def DeleteMessageForUser(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/chat.message.MessageService/DeleteMessageForUser',
+            cassandra__handler__pb2.DeleteMessageRequest.SerializeToString,
+            cassandra__handler__pb2.DeleteMessageResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def RecallMessageForSender(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/chat.message.MessageService/RecallMessageForSender',
+            cassandra__handler__pb2.RecallMessageForSenderReq.SerializeToString,
+            cassandra__handler__pb2.RecallMessageForSenderResp.FromString,
             options,
             channel_credentials,
             insecure,

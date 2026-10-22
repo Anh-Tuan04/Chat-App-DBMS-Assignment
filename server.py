@@ -41,7 +41,7 @@ mysql_channel = grpc.insecure_channel('localhost:50052')
 mysql_stub = mysql_handler_pb2_grpc.MySQLHandlerStub(mysql_channel)
 
 cassandra_channel = grpc.insecure_channel('localhost:50051')
-cassandra_stub = cassandra_handler_pb2_grpc.CassandraHandlerStub(cassandra_channel)
+cassandra_stub = cassandra_handler_pb2_grpc.MessageServiceStub(cassandra_channel)
 
 
 def authenticate(username, password):
