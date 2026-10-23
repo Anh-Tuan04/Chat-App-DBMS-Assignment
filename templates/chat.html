@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Obsidian – Messages</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    />
+    <link href="/static/chat/chat.css" rel="stylesheet" />
+  </head>
+  <body>
+    <!-- ===== Sidebar: conversation list ===== -->
+    <nav class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-brand">
+          <div class="sidebar-logo">
+            <span class="material-symbols-outlined">forum</span>
+          </div>
+          <div>
+            <h2 class="sidebar-title">Messages</h2>
+            <span class="sidebar-subtitle">4 active discussions</span>
+          </div>
+        </div>
+        <button class="new-message-btn" title="New message">
+          <span class="material-symbols-outlined">edit_square</span>
+        </button>
+      </div>
+
+      <div class="conversation-list">
+        <div class="conversation-item is-active">
+          <div class="conversation-avatar-wrap">
+            <img
+              class="conversation-avatar"
+              alt="Marcus Vance"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBsRdp1e4FvLW2W9mqEPViBlDLzuFs6XVNI2J9PH5fB3Beat8BeYQo6_vUxN1fJaud89w2pSEBSCRg_xqd-73yq2P8rnu9N0WUq3mOMIYYsbKE0nDftoTLPNbZsNcARX4g3a74RVKV0FB7ZjauKXaRiNirIIfdMjFduDuAef_EeIO1Cnt02GF22af-8TzP4UpncHhW-R-fH_V4KznxjV0_6LKHmmD8XNk1GonoK__tcZIMRpc4OzSGGeA"
+            />
+            <span class="status-dot is-online"></span>
+          </div>
+          <div class="conversation-body">
+            <div class="conversation-top">
+              <span class="conversation-name">Marcus Vance</span>
+              <span class="conversation-time">09:50 AM</span>
+            </div>
+            <p class="conversation-preview">
+              Attaching complete decking for afternoon...
+            </p>
+          </div>
+        </div>
+
+        <div class="conversation-item">
+          <div class="conversation-avatar-wrap">
+            <img
+              class="conversation-avatar"
+              alt="Elena Rostova"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuC56DWjPONVX8EdJesAI5DaX9Kk8lNQP_u94LtqnC2n6MmTMsm3kq7YxAb3fhxoiA4SwUZ2seUGcSWOGbEnAjevT_zl_XRXgBOinNBB_WI1xVFQRrFijyA2gwXnzCaviJvqJgdnIWXE0QFttTFR-x71xVgR8gVlMt-yUljRKZ2CNSNt9-gW_aYvDlcxvJqtVMuKcdbEP-PFyuvsuRJCriJ_mbzpfUXv3BSJkWy1zWJT0bivo1SLOMxA3w"
+            />
+            <span class="status-dot is-online"></span>
+            <span class="unread-badge">2</span>
+          </div>
+          <div class="conversation-body">
+            <div class="conversation-top">
+              <span class="conversation-name">Elena Rostova</span>
+              <span class="conversation-time">09:44 AM</span>
+            </div>
+            <p class="conversation-preview">
+              I wrote a lightweight subscriber to monitor...
+            </p>
+          </div>
+        </div>
+
+        <div class="conversation-item">
+          <div class="conversation-avatar-wrap">
+            <div class="conversation-channel-avatar">
+              <span class="material-symbols-outlined">tag</span>
+            </div>
+            <span class="status-dot is-idle"></span>
+          </div>
+          <div class="conversation-body">
+            <div class="conversation-top">
+              <span class="conversation-name">general-product-core</span>
+              <span class="conversation-time">Yesterday</span>
+            </div>
+            <p class="conversation-preview">Tanya: Looks great! Let's ship.</p>
+          </div>
+        </div>
+
+        <div class="conversation-item">
+          <div class="conversation-avatar-wrap">
+            <div class="conversation-initials">AM</div>
+            <span class="status-dot is-online"></span>
+          </div>
+          <div class="conversation-body">
+            <div class="conversation-top">
+              <span class="conversation-name">Alex Mercer</span>
+              <span class="conversation-time">10:02 AM</span>
+            </div>
+            <p class="conversation-preview">
+              Here's the spatial bounding matrix showing...
+            </p>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ===== Page content ===== -->
+    <div class="page-content">
+      <!-- Top bar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <span class="server-name">Servername</span>
+          <div class="topbar-divider"></div>
+        </div>
+
+        <div class="topbar-right">
+          <div class="search-box">
+            <input
+              class="search-input"
+              type="text"
+              placeholder="Message Search"
+            />
+            <span class="material-symbols-outlined search-icon">search</span>
+          </div>
+
+          <div class="topbar-actions">
+            <button class="topbar-action-btn" type="button" title="Add Friend">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.75"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <line x1="19" x2="19" y1="8" y2="14"></line>
+                <line x1="22" x2="16" y1="11" y2="11"></line>
+              </svg>
+            </button>
+            <button
+              class="topbar-action-btn"
+              type="button"
+              title="Create Group"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.75"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M15 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="8" cy="7" r="4"></circle>
+                <path d="M19 15v-1a2.5 2.5 0 0 0-2-2.45"></path>
+                <circle cx="17" cy="7" r="2.5"></circle>
+                <line x1="21" x2="21" y1="2" y2="8"></line>
+                <line x1="18" x2="24" y1="5" y2="5"></line>
+              </svg>
+            </button>
+          </div>
+
+          <div class="user-avatar">
+            <span class="material-symbols-outlined">person</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Chat area -->
+      <main class="chat-main">
+        <div class="chat-panel">
+          <!-- Message stream -->
+          <div class="message-stream" id="message-stream">
+            <div class="date-divider">
+              <div class="date-divider-line-wrap">
+                <div class="date-divider-line"></div>
+              </div>
+              <span class="date-divider-label">Today, October 24, 2024</span>
+            </div>
+
+            <!-- Message: plain text -->
+            <div class="message">
+              <div class="message-avatar-wrap">
+                <img
+                  class="message-avatar"
+                  alt="Marcus Vance"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuBsRdp1e4FvLW2W9mqEPViBlDLzuFs6XVNI2J9PH5fB3Beat8BeYQo6_vUxN1fJaud89w2pSEBSCRg_xqd-73yq2P8rnu9N0WUq3mOMIYYsbKE0nDftoTLPNbZsNcARX4g3a74RVKV0FB7ZjauKXaRiNirIIfdMjFduDuAef_EeIO1Cnt02GF22af-8TzP4UpncHhW-R-fH_V4KznxjV0_6LKHmmD8XNk1GonoK__tcZIMRpc4OzSGGeA"
+                />
+                <span class="status-dot is-online"></span>
+              </div>
+              <div class="message-body">
+                <div class="message-header">
+                  <span class="message-author">Marcus Vance</span>
+                  <span class="role-badge role-staff">Staff Eng</span>
+                  <span class="message-time">09:41 AM</span>
+                </div>
+                <p class="message-text">
+                  Morning team! Updated token scales are merged into
+                  <code class="inline-code">main</code>. Please verify
+                  high-contrast typography mappings follow revised design specs
+                  before today's sync.
+                </p>
+              </div>
+            </div>
+
+            <!-- Message: code snippet -->
+            <div class="message">
+              <div class="message-avatar-wrap">
+                <img
+                  class="message-avatar"
+                  alt="Elena Rostova"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuC56DWjPONVX8EdJesAI5DaX9Kk8lNQP_u94LtqnC2n6MmTMsm3kq7YxAb3fhxoiA4SwUZ2seUGcSWOGbEnAjevT_zl_XRXgBOinNBB_WI1xVFQRrFijyA2gwXnzCaviJvqJgdnIWXE0QFttTFR-x71xVgR8gVlMt-yUljRKZ2CNSNt9-gW_aYvDlcxvJqtVMuKcdbEP-PFyuvsuRJCriJ_mbzpfUXv3BSJkWy1zWJT0bivo1SLOMxA3w"
+                />
+                <span class="status-dot is-online"></span>
+              </div>
+              <div class="message-body">
+                <div class="message-header">
+                  <span class="message-author">Elena Rostova</span>
+                  <span class="role-badge role-core">Core Systems</span>
+                  <span class="message-time">09:44 AM</span>
+                </div>
+                <p class="message-text has-attachment">
+                  I wrote a lightweight subscriber to monitor color mode
+                  mismatches on client mounts:
+                </p>
+
+                <div class="code-block">
+                  <div class="code-block-header">
+                    <div class="code-block-title">
+                      <span class="material-symbols-outlined">data_object</span>
+                      <span>tokenObserver.ts</span>
+                    </div>
+                    <button
+                      class="code-copy-btn"
+                      type="button"
+                      data-copy-target="code-block-1"
+                    >
+                      <span class="material-symbols-outlined"
+                        >content_copy</span
+                      >
+                      <span>Copy Code</span>
+                    </button>
+                  </div>
+                  <pre
+                    class="code-block-content"
+                    id="code-block-1"
+                  ><span class="token-keyword">export const</span> <span class="token-function">watchContrastTokens</span> = (theme: ThemeMode) =&gt; {
+  <span class="token-muted">const</span> root = document.documentElement;
+  <span class="token-keyword">const</span> required = [<span class="token-string">'--on-surface'</span>, <span class="token-string">'--surface-container'</span>];
+
+  <span class="token-keyword">return</span> required.every(key =&gt; {
+    <span class="token-keyword">return</span> getComputedStyle(root).getPropertyValue(key).length &gt; 0;
+  });
+};</pre>
+                </div>
+              </div>
+            </div>
+
+            <!-- Message: file attachment -->
+            <div class="message">
+              <div class="message-avatar-wrap">
+                <img
+                  class="message-avatar"
+                  alt="Marcus Vance"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuChblbCei76PhCZuYGbibw4cynV_Sf-dbWcPJmDvYYjDA9nNkAwlkyfR654Q0yvXEjdT2FUQBMaBKU7HTn9eXhPBgLUerZehtY4l5As6_SbLAjDQFg5yRZaOOKqB5-tKqgAJ-bLVpzntEktGSDmw7NC25ptZyMeQZfDy7od-u-Yn1LA073vYqzSqokEVNiUf0XywBwfCGKw76_krpRZFuIu8_UPnVYtNcfHCWYAWrlYWo9KN9Fevgc3Cg"
+                />
+                <span class="status-dot is-online"></span>
+              </div>
+              <div class="message-body">
+                <div class="message-header">
+                  <span class="message-author">Marcus Vance</span>
+                  <span class="role-badge role-staff">Staff Eng</span>
+                  <span class="message-time">09:50 AM</span>
+                </div>
+                <p class="message-text has-attachment">
+                  Attaching the complete presentation decking for the afternoon
+                  governance panel:
+                </p>
+
+                <div class="file-card">
+                  <div class="file-card-info">
+                    <div class="file-card-icon">
+                      <span class="material-symbols-outlined"
+                        >picture_as_pdf</span
+                      >
+                    </div>
+                    <div class="file-card-details">
+                      <div class="file-card-name-row">
+                        <span class="file-card-name"
+                          >Q3_Design_Review_v2.pdf</span
+                        >
+                        <span
+                          class="material-symbols-outlined file-card-verified"
+                          title="Verified Architecture Document"
+                          >verified</span
+                        >
+                      </div>
+                      <span class="file-card-meta">4.2 MB • PDF Document</span>
+                    </div>
+                  </div>
+                  <button
+                    class="file-card-download-btn"
+                    type="button"
+                    title="Download Document"
+                  >
+                    <span class="material-symbols-outlined">download</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Message: image attachment -->
+            <div class="message">
+              <div class="message-avatar-wrap">
+                <div class="message-avatar-initials">AM</div>
+                <span class="status-dot is-online"></span>
+              </div>
+              <div class="message-body">
+                <div class="message-header">
+                  <span class="message-author">Alex Mercer</span>
+                  <span class="role-badge role-lead">Lead</span>
+                  <span class="message-time">10:02 AM</span>
+                </div>
+                <p class="message-text has-attachment">
+                  Here's the spatial bounding matrix showing layout rules across
+                  responsive breakpoints:
+                </p>
+
+                <div class="image-card">
+                  <div class="image-card-preview">
+                    <img
+                      class="image-card-img"
+                      alt="Interface design wireframe diagram"
+                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuCMIRFpDsu4u_qXvo7a93COqr_Dm-grJjLLaJYjav5u5ulaSK-9qe34dt_SJMlgJJJon5bSALBfQcQMo3_H8y6bAOYdU3WS3lxANAUeVlhT1df1FiD7nIK_OddUvYt1yo_Bxr0uF-jrY9zLj3uEGKFFJYtQlHCDTeLYski-_bmfwIHGZB06fktSg4PjR5KSt0I_O7cSYVuMxu1Qcppv9Hg1wgxayY4KVsCc6B4EAhKoR-2N1_neEVlUQQ"
+                    />
+                    <div class="image-card-overlay">
+                      <div class="image-card-info">
+                        <span class="image-card-filename"
+                          >thread_spec_v04.png</span
+                        >
+                        <span class="image-card-meta"
+                          >2560 × 1440 • 840 KB</span
+                        >
+                      </div>
+                      <div class="image-card-actions">
+                        <button
+                          class="image-card-action-btn"
+                          type="button"
+                          title="Zoom in"
+                        >
+                          <span class="material-symbols-outlined">zoom_in</span>
+                        </button>
+                        <button
+                          class="image-card-action-btn"
+                          type="button"
+                          title="Download file"
+                        >
+                          <span class="material-symbols-outlined"
+                            >download</span
+                          >
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Composer -->
+          <div class="composer">
+            <div class="composer-box">
+              <div class="composer-row">
+                <button
+                  class="composer-attach-btn"
+                  type="button"
+                  title="Attach file or code snippet"
+                >
+                  <span class="material-symbols-outlined">add_circle</span>
+                </button>
+                <input
+                  class="composer-input"
+                  id="chat-input"
+                  type="text"
+                  placeholder="Message #general-product-core (Press Enter to send, Shift+Enter for new line)"
+                />
+                <button
+                  class="composer-send-btn"
+                  id="send-btn"
+                  type="button"
+                  title="Send Message"
+                >
+                  <span class="material-symbols-outlined">send</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="/static/chat/chat.js"></script>
+  </body>
+</html>

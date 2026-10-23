@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Obsidian – Sign in</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    />
+    <link href="/static/auth/login/login.css" rel="stylesheet" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="brand">
+        <div class="brand-logo">
+          <span class="material-symbols-outlined">chat_bubble</span>
+        </div>
+        <span class="brand-name">Obsidian</span>
+      </div>
+    </header>
+
+    <main class="site-main">
+      <section class="login-section">
+        <div class="login-glow"></div>
+
+        <div class="login-container">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-logo">
+                <span class="material-symbols-outlined">chat_bubble</span>
+              </div>
+              <span class="card-eyebrow">Obsidian Workspace</span>
+              <h1 class="card-title">Welcome back</h1>
+              <p class="card-subtitle">
+                Sign in to your account to continue chatting with your team
+              </p>
+            </div>
+
+            <form class="login-form" id="login-form">
+              <div class="form-field">
+                <label for="login-identifier">Email or Username</label>
+                <div class="input-group">
+                  <span class="material-symbols-outlined input-icon"
+                    >alternate_email</span
+                  >
+                  <input
+                    id="login-identifier"
+                    type="text"
+                    placeholder="alex@example.com"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="form-field">
+                <div class="field-label-row">
+                  <label for="login-password">Password</label>
+                  <a href="#" class="forgot-link" data-path="forgot-password"
+                    >Forgot password?</a
+                  >
+                </div>
+                <div class="input-group">
+                  <span class="material-symbols-outlined input-icon">lock</span>
+                  <input
+                    id="login-password"
+                    class="input-with-toggle"
+                    type="password"
+                    placeholder="••••••••••••"
+                    required
+                  />
+                  <button
+                    type="button"
+                    id="password-toggle-btn"
+                    class="password-toggle-btn"
+                    aria-label="Toggle password visibility"
+                  >
+                    <span
+                      class="material-symbols-outlined"
+                      id="password-toggle-icon"
+                      >visibility</span
+                    >
+                  </button>
+                </div>
+              </div>
+
+              <button type="submit" id="signin-btn" class="btn-primary">
+                <span>Sign In</span>
+                <span class="material-symbols-outlined">arrow_forward</span>
+              </button>
+            </form>
+
+            <div class="divider"></div>
+
+            <div class="signup-prompt">
+              <p>
+                Don't have an account?
+                <a href="#" class="signup-link" data-path="register"
+                  >Create an account</a
+                >
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="/static/auth/login/login.js"></script>
+  </body>
+</html>
