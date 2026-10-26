@@ -1,3 +1,8 @@
+import eventlet
+eventlet.monkey_patch()
+
+
+from flask_socketio import SocketIO, join_room, leave_room, emit
 import functools
 import os
 import secrets
@@ -19,6 +24,7 @@ app.secret_key = os.environ.get('SECRET_KEY') or secrets.token_hex(32)
 # Largest request body Flask will read, in bytes; anything bigger gets a 413.
 # Raise it (or override it per request) when file uploads are added.
 app.config['MAX_CONTENT_LENGTH'] = 64 * 1024
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 # Upper bounds for text sent by the client
 MAX_USERNAME_LENGTH = 255
@@ -37,11 +43,11 @@ class CassandraServiceUnavailable(Exception):
 # gRPC channels (and the stubs built on them) are thread-safe and meant to be
 # shared, so they are created once here instead of once per request. Channels
 # connect lazily, so the handlers don't need to be up when this file is loaded.
-mysql_channel = grpc.insecure_channel('localhost:50052')
-mysql_stub = mysql_handler_pb2_grpc.MySQLHandlerStub(mysql_channel)
+# mysql_channel = grpc.insecure_channel('localhost:50052')
+# mysql_stub = mysql_handler_pb2_grpc.MySQLHandlerStub(mysql_channel)
 
-cassandra_channel = grpc.insecure_channel('localhost:50051')
-cassandra_stub = cassandra_handler_pb2_grpc.MessageServiceStub(cassandra_channel)
+# cassandra_channel = grpc.insecure_channel('localhost:50051')
+# cassandra_stub = cassandra_handler_pb2_grpc.CassandraHandlerStub(cassandra_channel)
 
 
 def authenticate(username, password):
@@ -103,21 +109,23 @@ def login():
     if len(username) > MAX_USERNAME_LENGTH or len(password) > MAX_PASSWORD_LENGTH:
         return '', 400     # credentials too long
 
-    try:
-        user = authenticate(username, password)
-    except MySQLServiceUnavailable:
-        return '', 503     # MySQL handler unavailable
+    # try:
+    #     user = authenticate(username, password)
+    # except MySQLServiceUnavailable:
+    #     return '', 503     # MySQL handler unavailable
 
-    if user is None:
-        return '', 401     # invalid credentials
+    # if user is None:
+    #     return '', 401     # invalid credentials
 
     # Remember who this browser is, so /app can check it later
-    session['user_id'] = user['user_id']
+    # session['user_id'] = user['user_id']
+    if not (username == "test" and password == "test"):
+        return '', 401     # invalid credentials
     return jsonify(redirect=url_for('message_app')), 200
 
 
 @app.route('/app')
-@login_required
+# @login_required
 def message_app():
     return send_file('message.html')
 
@@ -138,22 +146,55 @@ def handle_incoming_message():
     print(f'Received message, content: \n', data)
 
     # Send request to handler
-    try:
-        response = cassandra_stub.AddMessage(cassandra_handler_pb2.AddMessageRequest(
-            senderID=session['user_id'],
-            receiverID=112233,
-            content=content
-        ))
-        if (response.ok):
-            print("Client received message successfully")
-            return '', 204
+    # try:
+    #     response = cassandra_stub.AddMessage(cassandra_handler_pb2.AddMessageRequest(
+    #         senderID=session['user_id'],
+    #         receiverID=112233,
+    #         content=content
+    #     ))
+    #     if (response.ok):
+    #         print("Client received message successfully")
+    #         return '', 204
 
-        # The handler was reached but failed to store the message
-        print(f'error: {response.err}')
-        return '', 500
-    except grpc.RpcError:
-        return '', 503
+    #     # The handler was reached but failed to store the message
+    #     print(f'error: {response.err}')
+    #     return '', 500
+    # except grpc.RpcError:
+    #     return '', 503
 
+# SocketIO
+@socketio.on('connect')
+def on_connect():
+    print(f"Client connected!")
+
+
+
+@socketio.on('join')
+def on_join(data):
+    join_room(data['user_name'])
+    emit('connected', {'content': f"{data['user_name']} has entered the room."}, to=data['user_name'])
+
+@socketio.on('leave')
+def on_leave(data):
+    username = data.get('username', 'Unknown')
+    leave_room(username)
+    emit('disconnected', {'content': f"{username} has left the room."}, namespace='/chat', to=data['user_name'])
+
+@socketio.on('message')
+def handle_message(data):
+    print(f"Received message: {data['content']}")
+    emit('message', {'content': data['content']}, to='test')
+
+
+
+background_worker_counter = 0
+def background_worker():
+    global background_worker_counter
+    while True:
+        socketio.sleep(2)
+        background_worker_counter += 1
+        socketio.emit('message', {'content': f"Warning you {background_worker_counter} time(s)!"}, to='test')
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    socketio.start_background_task(background_worker)
+    socketio.run(app, host='localhost', port=5000, debug=True)
