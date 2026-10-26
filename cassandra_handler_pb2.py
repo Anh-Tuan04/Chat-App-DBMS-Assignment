@@ -24,17 +24,37 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x17\x63\x61ssandra_handler.proto\"J\n\x11\x41\x64\x64MessageRequest\x12\x10\n\x08senderID\x18\x01 \x01(\x03\x12\x12\n\nreceiverID\x18\x02 \x01(\x03\x12\x0f\n\x07\x63ontent\x18\x03 \x01(\t\",\n\x11\x41\x64\x64MessageRespond\x12\n\n\x02ok\x18\x01 \x01(\x08\x12\x0b\n\x03\x65rr\x18\x02 \x01(\t2J\n\x10\x43\x61ssandraHandler\x12\x36\n\nAddMessage\x12\x12.AddMessageRequest\x1a\x12.AddMessageRespond\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x17\x63\x61ssandra_handler.proto\x12\x0c\x63hat.message\"h\n\x07Message\x12\x12\n\nmessage_id\x18\x03 \x01(\x03\x12\x11\n\tsender_id\x18\x04 \x01(\x03\x12\x0f\n\x07\x63ontent\x18\x05 \x01(\t\x12\x12\n\ncreated_at\x18\x06 \x01(\x03\x12\x11\n\tedited_at\x18\x07 \x01(\x03\"\xc8\x01\n\x0c\x43onversation\x12\x17\n\x0f\x63onversation_id\x18\x01 \x01(\x03\x12\x19\n\x11\x63onversation_type\x18\x02 \x01(\t\x12\x17\n\x0flast_message_id\x18\x03 \x01(\x03\x12\x1c\n\x14last_message_content\x18\x04 \x01(\t\x12\x1e\n\x16last_message_sender_id\x18\x05 \x01(\x03\x12\x17\n\x0flast_message_at\x18\x06 \x01(\x03\x12\x14\n\x0cunread_count\x18\x07 \x01(\x05\"Q\n\x12SendMessageRequest\x12\x17\n\x0f\x63onversation_id\x18\x01 \x01(\x03\x12\x11\n\tsender_id\x18\x02 \x01(\x03\x12\x0f\n\x07\x63ontent\x18\x03 \x01(\t\"3\n\x13SendMessageResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0b\n\x03\x65rr\x18\x02 \x01(\t\"n\n\x18GetMessageForUserRequest\x12\x17\n\x0f\x63onversation_id\x18\x01 \x01(\x03\x12\x0f\n\x07user_id\x18\x02 \x01(\x03\x12\r\n\x05limit\x18\x03 \x01(\x05\x12\x19\n\x11\x62\x65\x66ore_message_id\x18\x04 \x01(\x03\"w\n\x19GetMessageForUserResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\'\n\x08messages\x18\x02 \x03(\x0b\x32\x15.chat.message.Message\x12\x13\n\x0bnext_cursor\x18\x03 \x01(\x03\x12\x0b\n\x03\x65rr\x18\x04 \x01(\t\"/\n\x1cGetConversationByUserRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\x03\"p\n\x1dGetConversationByUserResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x31\n\rconversations\x18\x02 \x03(\x0b\x32\x1a.chat.message.Conversation\x12\x0b\n\x03\x65rr\x18\x03 \x01(\t\"T\n\x14\x44\x65leteMessageRequest\x12\x17\n\x0f\x63onversation_id\x18\x01 \x01(\x03\x12\x12\n\nmessage_id\x18\x02 \x01(\x03\x12\x0f\n\x07user_id\x18\x03 \x01(\x03\"5\n\x15\x44\x65leteMessageResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0b\n\x03\x65rr\x18\x02 \x01(\t\"X\n\x19RecallMessageForSenderReq\x12\x12\n\nmessage_id\x18\x01 \x01(\x03\x12\x17\n\x0f\x63onversation_id\x18\x02 \x01(\x03\x12\x0e\n\x06req_id\x18\x03 \x01(\x03\":\n\x1aRecallMessageForSenderResp\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0b\n\x03\x65rr\x18\x02 \x01(\t2\x94\x04\n\x0eMessageService\x12T\n\x0bSendMessage\x12 .chat.message.SendMessageRequest\x1a!.chat.message.SendMessageResponse\"\x00\x12\x66\n\x11GetMessageForUser\x12&.chat.message.GetMessageForUserRequest\x1a\'.chat.message.GetMessageForUserResponse\"\x00\x12r\n\x15GetConversationByUser\x12*.chat.message.GetConversationByUserRequest\x1a+.chat.message.GetConversationByUserResponse\"\x00\x12\x61\n\x14\x44\x65leteMessageForUser\x12\".chat.message.DeleteMessageRequest\x1a#.chat.message.DeleteMessageResponse\"\x00\x12m\n\x16RecallMessageForSender\x12\'.chat.message.RecallMessageForSenderReq\x1a(.chat.message.RecallMessageForSenderResp\"\x00\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'cassandra_handler_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_ADDMESSAGEREQUEST']._serialized_start=27
-  _globals['_ADDMESSAGEREQUEST']._serialized_end=101
-  _globals['_ADDMESSAGERESPOND']._serialized_start=103
-  _globals['_ADDMESSAGERESPOND']._serialized_end=147
-  _globals['_CASSANDRAHANDLER']._serialized_start=149
-  _globals['_CASSANDRAHANDLER']._serialized_end=223
+  _globals['_MESSAGE']._serialized_start=41
+  _globals['_MESSAGE']._serialized_end=145
+  _globals['_CONVERSATION']._serialized_start=148
+  _globals['_CONVERSATION']._serialized_end=348
+  _globals['_SENDMESSAGEREQUEST']._serialized_start=350
+  _globals['_SENDMESSAGEREQUEST']._serialized_end=431
+  _globals['_SENDMESSAGERESPONSE']._serialized_start=433
+  _globals['_SENDMESSAGERESPONSE']._serialized_end=484
+  _globals['_GETMESSAGEFORUSERREQUEST']._serialized_start=486
+  _globals['_GETMESSAGEFORUSERREQUEST']._serialized_end=596
+  _globals['_GETMESSAGEFORUSERRESPONSE']._serialized_start=598
+  _globals['_GETMESSAGEFORUSERRESPONSE']._serialized_end=717
+  _globals['_GETCONVERSATIONBYUSERREQUEST']._serialized_start=719
+  _globals['_GETCONVERSATIONBYUSERREQUEST']._serialized_end=766
+  _globals['_GETCONVERSATIONBYUSERRESPONSE']._serialized_start=768
+  _globals['_GETCONVERSATIONBYUSERRESPONSE']._serialized_end=880
+  _globals['_DELETEMESSAGEREQUEST']._serialized_start=882
+  _globals['_DELETEMESSAGEREQUEST']._serialized_end=966
+  _globals['_DELETEMESSAGERESPONSE']._serialized_start=968
+  _globals['_DELETEMESSAGERESPONSE']._serialized_end=1021
+  _globals['_RECALLMESSAGEFORSENDERREQ']._serialized_start=1023
+  _globals['_RECALLMESSAGEFORSENDERREQ']._serialized_end=1111
+  _globals['_RECALLMESSAGEFORSENDERRESP']._serialized_start=1113
+  _globals['_RECALLMESSAGEFORSENDERRESP']._serialized_end=1171
+  _globals['_MESSAGESERVICE']._serialized_start=1174
+  _globals['_MESSAGESERVICE']._serialized_end=1706
 # @@protoc_insertion_point(module_scope)
