@@ -182,8 +182,8 @@ def on_leave(data):
 
 @socketio.on('message')
 def handle_message(data):
-    print(f"Received message: {data['content']}")
-    emit('message', {'content': data['content']}, to='test')
+    print(f"Received message: {data['content']}, sender: {data.get('sender', 'Unknown')}")
+    emit('message', {'content': data['content'], 'sender': data.get('sender', 'Unknown')}, to='test')
 
 
 
@@ -193,7 +193,7 @@ def background_worker():
     while True:
         socketio.sleep(2)
         background_worker_counter += 1
-        socketio.emit('message', {'content': f"Warning you {background_worker_counter} time(s)!"}, to='test')
+        socketio.emit('message', {'content': f"Warning you {background_worker_counter} time(s)!", 'sender': 'partner'}, to='test')
 
 if __name__ == '__main__':
     socketio.start_background_task(background_worker)

@@ -5,7 +5,7 @@ const socket = io("http://localhost:5000");
 socket.on('connect', () => {
     socket.emit('join', { user_name: 'test' });
 });
-socket.on('message', (data) => {handleAddMessage(data.content, 'user')});
+socket.on('message', (data) => {handleAddMessage(data.content, data.sender)});
 
 async function handleAddMessage(message, senderType = 'user') {
             const container = document.getElementById('messages-container');
@@ -17,7 +17,7 @@ async function handleAddMessage(message, senderType = 'user') {
             avatar.className = 'avatar-placeholder';
 
             const content = document.createElement('div');
-            content.className = 'message-content user';
+            content.className = `message-content ${senderType}`;
             content.textContent = message;   // sanitize user's input
 
             wrapper.append(avatar, content);
@@ -49,7 +49,7 @@ document.getElementById('message-form').addEventListener('submit', async (e) => 
         // } else {
         //     console.error('Server did not accept the message:', response.status);
         // }
-        socket.emit('message', { content: message });
+        socket.emit('message', { content: message, sender: 'user' });
         messageInput.value = '';
     } catch (err) {
         console.error('Could not reach server:', err);
