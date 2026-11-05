@@ -3,6 +3,17 @@
   const passwordInput = document.getElementById('login-password');
   const passwordToggleBtn = document.getElementById('password-toggle-btn');
   const passwordToggleIcon = document.getElementById('password-toggle-icon');
+  const toast = document.getElementById('toast');
+
+  // Show toast message
+  let toastTimer = null;
+
+  function showToast(text) {
+    toast.textContent = text;
+    toast.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.hidden = true; }, 2500);
+  }
 
   // Show / hide password
   if (passwordToggleBtn && passwordInput && passwordToggleIcon) {
@@ -29,4 +40,6 @@
       // Route to link.dataset.path ("forgot-password" | "register")
     });
   });
+
+
 })();

@@ -13,6 +13,16 @@
   // Strength levels, indexed by score - 1
   const STRENGTH_LEVELS = ['weak', 'fair', 'good', 'strong'];
 
+  // Show toast message
+  let toastTimer = null;
+
+  function showToast(text) {
+    toast.textContent = text;
+    toast.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.hidden = true; }, 2500);
+  }
+
   // Show / hide password
   if (passwordToggleBtn && passwordInput && passwordToggleIcon) {
     passwordToggleBtn.addEventListener('click', function () {

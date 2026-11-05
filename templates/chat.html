@@ -15,97 +15,35 @@
     <link href="/static/chat/chat.css" rel="stylesheet" />
   </head>
   <body>
+    <!-- ===== Error stack ===== -->
+    <div class="error-stack" id="error-stack" aria-live="assertive"></div>
+
     <!-- ===== Sidebar: conversation list ===== -->
     <nav class="sidebar">
       <div class="sidebar-header">
-        <div class="sidebar-brand">
-          <div class="sidebar-logo">
-            <span class="material-symbols-outlined">forum</span>
-          </div>
-          <div>
-            <h2 class="sidebar-title">Messages</h2>
-            <span class="sidebar-subtitle">4 active discussions</span>
-          </div>
-        </div>
-        <button class="new-message-btn" title="New message">
-          <span class="material-symbols-outlined">edit_square</span>
-        </button>
-      </div>
-
-      <div class="conversation-list">
-        <div class="conversation-item is-active">
-          <div class="conversation-avatar-wrap">
-            <img
-              class="conversation-avatar"
-              alt="Marcus Vance"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBsRdp1e4FvLW2W9mqEPViBlDLzuFs6XVNI2J9PH5fB3Beat8BeYQo6_vUxN1fJaud89w2pSEBSCRg_xqd-73yq2P8rnu9N0WUq3mOMIYYsbKE0nDftoTLPNbZsNcARX4g3a74RVKV0FB7ZjauKXaRiNirIIfdMjFduDuAef_EeIO1Cnt02GF22af-8TzP4UpncHhW-R-fH_V4KznxjV0_6LKHmmD8XNk1GonoK__tcZIMRpc4OzSGGeA"
-            />
-            <span class="status-dot is-online"></span>
-          </div>
-          <div class="conversation-body">
-            <div class="conversation-top">
-              <span class="conversation-name">Marcus Vance</span>
-              <span class="conversation-time">09:50 AM</span>
-            </div>
-            <p class="conversation-preview">
-              Attaching complete decking for afternoon...
-            </p>
-          </div>
-        </div>
-
-        <div class="conversation-item">
-          <div class="conversation-avatar-wrap">
-            <img
-              class="conversation-avatar"
-              alt="Elena Rostova"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuC56DWjPONVX8EdJesAI5DaX9Kk8lNQP_u94LtqnC2n6MmTMsm3kq7YxAb3fhxoiA4SwUZ2seUGcSWOGbEnAjevT_zl_XRXgBOinNBB_WI1xVFQRrFijyA2gwXnzCaviJvqJgdnIWXE0QFttTFR-x71xVgR8gVlMt-yUljRKZ2CNSNt9-gW_aYvDlcxvJqtVMuKcdbEP-PFyuvsuRJCriJ_mbzpfUXv3BSJkWy1zWJT0bivo1SLOMxA3w"
-            />
-            <span class="status-dot is-online"></span>
-            <span class="unread-badge">2</span>
-          </div>
-          <div class="conversation-body">
-            <div class="conversation-top">
-              <span class="conversation-name">Elena Rostova</span>
-              <span class="conversation-time">09:44 AM</span>
-            </div>
-            <p class="conversation-preview">
-              I wrote a lightweight subscriber to monitor...
-            </p>
-          </div>
-        </div>
-
-        <div class="conversation-item">
-          <div class="conversation-avatar-wrap">
-            <div class="conversation-channel-avatar">
-              <span class="material-symbols-outlined">tag</span>
-            </div>
-            <span class="status-dot is-idle"></span>
-          </div>
-          <div class="conversation-body">
-            <div class="conversation-top">
-              <span class="conversation-name">general-product-core</span>
-              <span class="conversation-time">Yesterday</span>
-            </div>
-            <p class="conversation-preview">Tanya: Looks great! Let's ship.</p>
-          </div>
-        </div>
-
-        <div class="conversation-item">
-          <div class="conversation-avatar-wrap">
-            <div class="conversation-initials">AM</div>
-            <span class="status-dot is-online"></span>
-          </div>
-          <div class="conversation-body">
-            <div class="conversation-top">
-              <span class="conversation-name">Alex Mercer</span>
-              <span class="conversation-time">10:02 AM</span>
-            </div>
-            <p class="conversation-preview">
-              Here's the spatial bounding matrix showing...
-            </p>
-          </div>
+        <div class="sidebar-search">
+          <span class="material-symbols-outlined sidebar-search-icon">search</span>
+          <input
+            class="sidebar-search-input"
+            id="sidebar-search-input"
+            type="text"
+            placeholder="Search people and groups"
+            autocomplete="off"
+            aria-label="Search people and groups"
+          />
+          <button
+            class="sidebar-search-clear"
+            id="sidebar-search-clear"
+            type="button"
+            title="Clear search"
+            hidden
+          >
+            <span class="material-symbols-outlined">close</span>
+          </button>
         </div>
       </div>
+
+      <div class="conversation-list"></div>
     </nav>
 
     <!-- ===== Page content ===== -->
@@ -128,7 +66,13 @@
           </div>
 
           <div class="topbar-actions">
-            <button class="topbar-action-btn" type="button" title="Add Friend">
+            <button
+              class="topbar-action-btn"
+              id="add-friend-btn"
+              data-modal-target="add-friend-modal"
+              type="button"
+              title="Add Friend"
+            >
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -145,6 +89,8 @@
             </button>
             <button
               class="topbar-action-btn"
+              id="create-group-btn"
+              data-modal-target="create-group-modal"
               type="button"
               title="Create Group"
             >
@@ -166,6 +112,18 @@
             </button>
           </div>
 
+          <button
+            class="topbar-action-btn notif-btn"
+            id="notifications-btn"
+            data-modal-target="notifications-modal"
+            type="button"
+            title="Notifications"
+            aria-label="Notifications"
+          >
+            <span class="material-symbols-outlined">notifications</span>
+            <span class="notif-badge" id="notif-badge" hidden>0</span>
+          </button>
+
           <div class="user-avatar">
             <span class="material-symbols-outlined">person</span>
           </div>
@@ -176,202 +134,7 @@
       <main class="chat-main">
         <div class="chat-panel">
           <!-- Message stream -->
-          <div class="message-stream" id="message-stream">
-            <div class="date-divider">
-              <div class="date-divider-line-wrap">
-                <div class="date-divider-line"></div>
-              </div>
-              <span class="date-divider-label">Today, October 24, 2024</span>
-            </div>
-
-            <!-- Message: plain text -->
-            <div class="message">
-              <div class="message-avatar-wrap">
-                <img
-                  class="message-avatar"
-                  alt="Marcus Vance"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuBsRdp1e4FvLW2W9mqEPViBlDLzuFs6XVNI2J9PH5fB3Beat8BeYQo6_vUxN1fJaud89w2pSEBSCRg_xqd-73yq2P8rnu9N0WUq3mOMIYYsbKE0nDftoTLPNbZsNcARX4g3a74RVKV0FB7ZjauKXaRiNirIIfdMjFduDuAef_EeIO1Cnt02GF22af-8TzP4UpncHhW-R-fH_V4KznxjV0_6LKHmmD8XNk1GonoK__tcZIMRpc4OzSGGeA"
-                />
-                <span class="status-dot is-online"></span>
-              </div>
-              <div class="message-body">
-                <div class="message-header">
-                  <span class="message-author">Marcus Vance</span>
-                  <span class="role-badge role-staff">Staff Eng</span>
-                  <span class="message-time">09:41 AM</span>
-                </div>
-                <p class="message-text">
-                  Morning team! Updated token scales are merged into
-                  <code class="inline-code">main</code>. Please verify
-                  high-contrast typography mappings follow revised design specs
-                  before today's sync.
-                </p>
-              </div>
-            </div>
-
-            <!-- Message: code snippet -->
-            <div class="message">
-              <div class="message-avatar-wrap">
-                <img
-                  class="message-avatar"
-                  alt="Elena Rostova"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuC56DWjPONVX8EdJesAI5DaX9Kk8lNQP_u94LtqnC2n6MmTMsm3kq7YxAb3fhxoiA4SwUZ2seUGcSWOGbEnAjevT_zl_XRXgBOinNBB_WI1xVFQRrFijyA2gwXnzCaviJvqJgdnIWXE0QFttTFR-x71xVgR8gVlMt-yUljRKZ2CNSNt9-gW_aYvDlcxvJqtVMuKcdbEP-PFyuvsuRJCriJ_mbzpfUXv3BSJkWy1zWJT0bivo1SLOMxA3w"
-                />
-                <span class="status-dot is-online"></span>
-              </div>
-              <div class="message-body">
-                <div class="message-header">
-                  <span class="message-author">Elena Rostova</span>
-                  <span class="role-badge role-core">Core Systems</span>
-                  <span class="message-time">09:44 AM</span>
-                </div>
-                <p class="message-text has-attachment">
-                  I wrote a lightweight subscriber to monitor color mode
-                  mismatches on client mounts:
-                </p>
-
-                <div class="code-block">
-                  <div class="code-block-header">
-                    <div class="code-block-title">
-                      <span class="material-symbols-outlined">data_object</span>
-                      <span>tokenObserver.ts</span>
-                    </div>
-                    <button
-                      class="code-copy-btn"
-                      type="button"
-                      data-copy-target="code-block-1"
-                    >
-                      <span class="material-symbols-outlined"
-                        >content_copy</span
-                      >
-                      <span>Copy Code</span>
-                    </button>
-                  </div>
-                  <pre
-                    class="code-block-content"
-                    id="code-block-1"
-                  ><span class="token-keyword">export const</span> <span class="token-function">watchContrastTokens</span> = (theme: ThemeMode) =&gt; {
-  <span class="token-muted">const</span> root = document.documentElement;
-  <span class="token-keyword">const</span> required = [<span class="token-string">'--on-surface'</span>, <span class="token-string">'--surface-container'</span>];
-
-  <span class="token-keyword">return</span> required.every(key =&gt; {
-    <span class="token-keyword">return</span> getComputedStyle(root).getPropertyValue(key).length &gt; 0;
-  });
-};</pre>
-                </div>
-              </div>
-            </div>
-
-            <!-- Message: file attachment -->
-            <div class="message">
-              <div class="message-avatar-wrap">
-                <img
-                  class="message-avatar"
-                  alt="Marcus Vance"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuChblbCei76PhCZuYGbibw4cynV_Sf-dbWcPJmDvYYjDA9nNkAwlkyfR654Q0yvXEjdT2FUQBMaBKU7HTn9eXhPBgLUerZehtY4l5As6_SbLAjDQFg5yRZaOOKqB5-tKqgAJ-bLVpzntEktGSDmw7NC25ptZyMeQZfDy7od-u-Yn1LA073vYqzSqokEVNiUf0XywBwfCGKw76_krpRZFuIu8_UPnVYtNcfHCWYAWrlYWo9KN9Fevgc3Cg"
-                />
-                <span class="status-dot is-online"></span>
-              </div>
-              <div class="message-body">
-                <div class="message-header">
-                  <span class="message-author">Marcus Vance</span>
-                  <span class="role-badge role-staff">Staff Eng</span>
-                  <span class="message-time">09:50 AM</span>
-                </div>
-                <p class="message-text has-attachment">
-                  Attaching the complete presentation decking for the afternoon
-                  governance panel:
-                </p>
-
-                <div class="file-card">
-                  <div class="file-card-info">
-                    <div class="file-card-icon">
-                      <span class="material-symbols-outlined"
-                        >picture_as_pdf</span
-                      >
-                    </div>
-                    <div class="file-card-details">
-                      <div class="file-card-name-row">
-                        <span class="file-card-name"
-                          >Q3_Design_Review_v2.pdf</span
-                        >
-                        <span
-                          class="material-symbols-outlined file-card-verified"
-                          title="Verified Architecture Document"
-                          >verified</span
-                        >
-                      </div>
-                      <span class="file-card-meta">4.2 MB • PDF Document</span>
-                    </div>
-                  </div>
-                  <button
-                    class="file-card-download-btn"
-                    type="button"
-                    title="Download Document"
-                  >
-                    <span class="material-symbols-outlined">download</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Message: image attachment -->
-            <div class="message">
-              <div class="message-avatar-wrap">
-                <div class="message-avatar-initials">AM</div>
-                <span class="status-dot is-online"></span>
-              </div>
-              <div class="message-body">
-                <div class="message-header">
-                  <span class="message-author">Alex Mercer</span>
-                  <span class="role-badge role-lead">Lead</span>
-                  <span class="message-time">10:02 AM</span>
-                </div>
-                <p class="message-text has-attachment">
-                  Here's the spatial bounding matrix showing layout rules across
-                  responsive breakpoints:
-                </p>
-
-                <div class="image-card">
-                  <div class="image-card-preview">
-                    <img
-                      class="image-card-img"
-                      alt="Interface design wireframe diagram"
-                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuCMIRFpDsu4u_qXvo7a93COqr_Dm-grJjLLaJYjav5u5ulaSK-9qe34dt_SJMlgJJJon5bSALBfQcQMo3_H8y6bAOYdU3WS3lxANAUeVlhT1df1FiD7nIK_OddUvYt1yo_Bxr0uF-jrY9zLj3uEGKFFJYtQlHCDTeLYski-_bmfwIHGZB06fktSg4PjR5KSt0I_O7cSYVuMxu1Qcppv9Hg1wgxayY4KVsCc6B4EAhKoR-2N1_neEVlUQQ"
-                    />
-                    <div class="image-card-overlay">
-                      <div class="image-card-info">
-                        <span class="image-card-filename"
-                          >thread_spec_v04.png</span
-                        >
-                        <span class="image-card-meta"
-                          >2560 × 1440 • 840 KB</span
-                        >
-                      </div>
-                      <div class="image-card-actions">
-                        <button
-                          class="image-card-action-btn"
-                          type="button"
-                          title="Zoom in"
-                        >
-                          <span class="material-symbols-outlined">zoom_in</span>
-                        </button>
-                        <button
-                          class="image-card-action-btn"
-                          type="button"
-                          title="Download file"
-                        >
-                          <span class="material-symbols-outlined"
-                            >download</span
-                          >
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <div class="message-stream" id="message-stream"></div>
 
           <!-- Composer -->
           <div class="composer">
@@ -404,6 +167,68 @@
         </div>
       </main>
     </div>
+
+    <!-- ===== Modal: Add friend ===== -->
+    <div class="modal" id="add-friend-modal" role="dialog" aria-modal="true" aria-labelledby="add-friend-title" hidden>
+      <div class="modal-backdrop" data-close></div>
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 class="modal-title" id="add-friend-title">Add friend</h3>
+          <button class="modal-close" type="button" data-close title="Close">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="modal-search">
+            <span class="material-symbols-outlined">search</span>
+            <input id="add-friend-input" type="text" placeholder="Search by name or handle" autocomplete="off" />
+          </div>
+          <div class="modal-results" id="add-friend-results"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Modal: Create group ===== -->
+    <div class="modal" id="create-group-modal" role="dialog" aria-modal="true" aria-labelledby="create-group-title" hidden>
+      <div class="modal-backdrop" data-close></div>
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 class="modal-title" id="create-group-title">Create group</h3>
+          <button class="modal-close" type="button" data-close title="Close">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <label class="modal-label" for="group-name-input">Group name</label>
+          <input class="modal-input" id="group-name-input" type="text" placeholder="e.g. design-systems" maxlength="40" autocomplete="off" />
+
+          <span class="modal-label">Add members</span>
+          <div class="modal-results member-list" id="group-members"></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" type="button" data-close>Cancel</button>
+          <button class="btn btn-primary" type="button" id="create-group-submit" disabled>Create group</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Modal: Notifications ===== -->
+    <div class="modal" id="notifications-modal" role="dialog" aria-modal="true" aria-labelledby="notifications-title" hidden>
+      <div class="modal-backdrop" data-close></div>
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 class="modal-title" id="notifications-title">Notifications</h3>
+          <button class="modal-close" type="button" data-close title="Close">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="modal-results" id="notification-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
     <script src="/static/chat/chat.js"></script>
   </body>
