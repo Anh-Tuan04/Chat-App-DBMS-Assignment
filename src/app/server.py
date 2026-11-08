@@ -1,43 +1,43 @@
-from flask import Flask, jsonify, redirect, request, session, url_for, send_from_directory
-import functools
 from pathlib import Path
+from flask import Flask
+
+BASE_DIR = Path(__file__).resolve().parents[2]
+STATIC_DIR = BASE_DIR / "static"
+# templates/ is supposed to stored jinja templates,
+# but it is currently used for plain html
+# TEMPLATES_DIR = BASE_DIR / "templates"
+
+# Imports from controllers
+# from app.modules.controllers.auth import auth_bp
+# from app.modules.controllers.conversations import conversations_bp
+# from app.modules.controllers.messages import messages_bp
+# from app.modules.controllers.notifications import notifications_bp
+# from app.modules.controllers.relationships import relationships_bp
+# from app.modules.controllers.users import users_bp
+from app.users.routes import users_routes_bp
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-TEMPLATE_DIR = PROJECT_ROOT / 'templates'
-STATIC_DIR = PROJECT_ROOT / 'static'
+def create_app() -> Flask:
+    app = Flask(
+        __name__,
+        static_folder=str(STATIC_DIR),
+        static_url_path='/static',
+        # template_folder=str(TEMPLATES_DIR)
+    )
+
+    # Register controller blueprints
+    # app.register_blueprint(auth_bp)
+    # app.register_blueprint(conversations_bp)
+    # app.register_blueprint(messages_bp)
+    # app.register_blueprint(notifications_bp)
+    # app.register_blueprint(relationships_bp)
+    # app.register_blueprint(users_bp)
+    app.register_blueprint(users_routes_bp)
+
+    return app
 
 
-app = Flask(
-    __name__,
-    static_folder=str(STATIC_DIR),
-    static_url_path='/static'    
-)
+app = create_app()
 
-
-app.secret_key = 'dev' # change to a config later
-
-
-def _require_login(view, on_denied):
-    """Decorator for login gating."""
-    @functools.wraps(view)
-    def wrapped(*args, **kwargs):
-        if 'user_id' not in session:
-            return on_denied()
-        return view(*args, **kwargs)
-    return wrapped
-
-
-def login_required(view):
-    """For pages: visitors without a session are sent to the login page."""
-    return _require_login(view, lambda: redirect(url_for('index')))
-
-
-def api_login_required(view):
-    """For JSON endpoints: answer 401, which the client JS turns into a redirect."""
-    return _require_login(view, lambda: ('', 401))
-
-
-@app.route('/')
-def index():
-    return send_from_directory(TEMPLATE_DIR, 'login.html')
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)
