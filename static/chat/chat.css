@@ -1409,3 +1409,60 @@ img { display: block; }
   box-shadow: var(--shadow-lg);
   animation: message-fade-in 0.2s ease;
 }
+
+/* ---------- Friends Component ---------- */
+.friends-btn {
+  color: var(--color-text-muted);
+}
+
+.friends-btn .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.friend-row {
+  cursor: pointer;
+  /* transition: background-color 0.15s ease, border-color 0.15s ease;
+  border: 1px solid transparent; */
+}
+
+/* Modifier state: is-active */
+/* .friend-row.is-active,
+.friend-row.is-active:hover {
+  background: var(--color-active-bg);
+  border-color: var(--color-border-strong);
+} */
+
+.friend-avatar-wrap {
+  position: relative;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+}
+
+/* Avatar Mode 1: Image URL */
+.friend-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 9999px;
+  object-fit: cover;
+}
+
+/* Avatar Mode 2: Initials Fallback */
+.friend-avatar-initials {
+  width: 100%;
+  height: 100%;
+  border-radius: 9999px;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.friend-avatar-wrap .status-dot {
+  box-shadow: 0 0 0 2px var(--color-card-bg);
+}

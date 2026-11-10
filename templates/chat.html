@@ -21,8 +21,11 @@
     <!-- ===== Sidebar: conversation list ===== -->
     <nav class="sidebar">
       <div class="sidebar-header">
+        <!-- ===== Search bar ===== -->
         <div class="sidebar-search">
-          <span class="material-symbols-outlined sidebar-search-icon">search</span>
+          <span class="material-symbols-outlined sidebar-search-icon"
+            >search</span
+          >
           <input
             class="sidebar-search-input"
             id="sidebar-search-input"
@@ -43,7 +46,7 @@
         </div>
       </div>
 
-      <div class="conversation-list"></div>
+      <div id="conversation-list" class="conversation-list"></div>
     </nav>
 
     <!-- ===== Page content ===== -->
@@ -51,7 +54,7 @@
       <!-- Top bar -->
       <header class="topbar">
         <div class="topbar-left">
-          <span class="server-name">Servername</span>
+          <span class="server-name" id="conversation-name">Servername</span>
           <div class="topbar-divider"></div>
         </div>
 
@@ -113,6 +116,17 @@
           </div>
 
           <button
+            class="topbar-action-btn friends-btn"
+            id="friends-btn"
+            data-modal-target="friends-modal"
+            type="button"
+            title="Friends List"
+            aria-label="Friends List"
+          >
+            <span class="material-symbols-outlined">group</span>
+          </button>
+
+          <button
             class="topbar-action-btn notif-btn"
             id="notifications-btn"
             data-modal-target="notifications-modal"
@@ -169,7 +183,14 @@
     </div>
 
     <!-- ===== Modal: Add friend ===== -->
-    <div class="modal" id="add-friend-modal" role="dialog" aria-modal="true" aria-labelledby="add-friend-title" hidden>
+    <div
+      class="modal"
+      id="add-friend-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="add-friend-title"
+      hidden
+    >
       <div class="modal-backdrop" data-close></div>
       <div class="modal-dialog">
         <div class="modal-header">
@@ -181,7 +202,12 @@
         <div class="modal-body">
           <div class="modal-search">
             <span class="material-symbols-outlined">search</span>
-            <input id="add-friend-input" type="text" placeholder="Search by name or handle" autocomplete="off" />
+            <input
+              id="add-friend-input"
+              type="text"
+              placeholder="Search by name or handle"
+              autocomplete="off"
+            />
           </div>
           <div class="modal-results" id="add-friend-results"></div>
         </div>
@@ -189,7 +215,14 @@
     </div>
 
     <!-- ===== Modal: Create group ===== -->
-    <div class="modal" id="create-group-modal" role="dialog" aria-modal="true" aria-labelledby="create-group-title" hidden>
+    <div
+      class="modal"
+      id="create-group-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="create-group-title"
+      hidden
+    >
       <div class="modal-backdrop" data-close></div>
       <div class="modal-dialog">
         <div class="modal-header">
@@ -200,20 +233,107 @@
         </div>
         <div class="modal-body">
           <label class="modal-label" for="group-name-input">Group name</label>
-          <input class="modal-input" id="group-name-input" type="text" placeholder="e.g. design-systems" maxlength="40" autocomplete="off" />
+          <input
+            class="modal-input"
+            id="group-name-input"
+            type="text"
+            placeholder="e.g. design-systems"
+            maxlength="40"
+            autocomplete="off"
+          />
 
           <span class="modal-label">Add members</span>
           <div class="modal-results member-list" id="group-members"></div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" type="button" data-close>Cancel</button>
-          <button class="btn btn-primary" type="button" id="create-group-submit" disabled>Create group</button>
+          <button class="btn btn-secondary" type="button" data-close>
+            Cancel
+          </button>
+          <button
+            class="btn btn-primary"
+            type="button"
+            id="create-group-submit"
+            disabled
+          >
+            Create group
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Modal: Friends List ===== -->
+    <div
+      class="modal"
+      id="friends-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="friends-title"
+      hidden
+    >
+      <div class="modal-backdrop" data-close></div>
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 class="modal-title" id="friends-title">Friends</h3>
+          <button class="modal-close" type="button" data-close title="Close">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="modal-search">
+            <span class="material-symbols-outlined">search</span>
+            <input
+              id="friends-search-input"
+              type="text"
+              placeholder="Search friends..."
+              autocomplete="off"
+            />
+          </div>
+          <div class="modal-results" id="friends-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Modal: Friends List ===== -->
+    <div
+      class="modal"
+      id="friends-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="friends-title"
+      hidden
+    >
+      <div class="modal-backdrop" data-close></div>
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 class="modal-title" id="friends-title">Friends</h3>
+          <button class="modal-close" type="button" data-close title="Close">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="modal-search">
+            <span class="material-symbols-outlined">search</span>
+            <input
+              id="friends-search-input"
+              type="text"
+              placeholder="Search friends..."
+              autocomplete="off"
+            />
+          </div>
+          <div class="modal-results" id="friends-list"></div>
         </div>
       </div>
     </div>
 
     <!-- ===== Modal: Notifications ===== -->
-    <div class="modal" id="notifications-modal" role="dialog" aria-modal="true" aria-labelledby="notifications-title" hidden>
+    <div
+      class="modal"
+      id="notifications-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="notifications-title"
+      hidden
+    >
       <div class="modal-backdrop" data-close></div>
       <div class="modal-dialog">
         <div class="modal-header">
@@ -229,7 +349,15 @@
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+    <script src="/static/chat/chat.js" type="module"></script>
 
-    <script src="/static/chat/chat.js"></script>
+    <!-- <script src="/static/chat/chat.js"></script>
+<script src="/static/chat/conversations.js"></script>
+<script src="/static/chat/search.js"></script>
+<script src="/static/chat/messages.js"></script>
+<script src="/static/chat/add-friends.js"></script>
+<script src="/static/chat/create-group.js"></script>
+<script src="/static/chat/notifications.js"></script>
+<script src="/static/chat/user-profile.js"></script> -->
   </body>
 </html>
