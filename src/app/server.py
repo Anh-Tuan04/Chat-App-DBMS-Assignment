@@ -1,5 +1,5 @@
 from pathlib import Path
-from flask import Flask
+from flask import Flask, jsonify
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 STATIC_DIR = BASE_DIR / "static"
@@ -8,7 +8,7 @@ STATIC_DIR = BASE_DIR / "static"
 # TEMPLATES_DIR = BASE_DIR / "templates"
 
 # Imports from controllers
-# from app.modules.controllers.auth import auth_bp
+from app.modules.controllers.auth import auth_bp
 # from app.modules.controllers.conversations import conversations_bp
 # from app.modules.controllers.messages import messages_bp
 # from app.modules.controllers.notifications import notifications_bp
@@ -26,7 +26,7 @@ def create_app() -> Flask:
     )
 
     # Register controller blueprints
-    # app.register_blueprint(auth_bp)
+    app.register_blueprint(auth_bp)
     # app.register_blueprint(conversations_bp)
     # app.register_blueprint(messages_bp)
     # app.register_blueprint(notifications_bp)

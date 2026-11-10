@@ -14,3 +14,7 @@ def index():
     # else, redirect to log in
 
     return send_from_directory(TEMPLATE_DIR, 'login.html')
+
+@users_routes_bp.route('/register', methods=['GET'])
+def serve_register_page():
+    return send_from_directory(TEMPLATE_DIR, 'register.html')
