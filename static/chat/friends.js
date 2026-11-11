@@ -1,3 +1,5 @@
+import { showError } from './error.js';
+
 /*
 <!-- ===== Modal: Friends List ===== -->
 <div class="modal" id="friends-modal" role="dialog" aria-modal="true" aria-labelledby="friends-title" hidden>
@@ -128,6 +130,26 @@ function createFriendRow({ id, initials, name, state, avatarUrl }) {
     friendRow.appendChild(info);
 
     return friendRow;
+}
+
+
+// function fetch to server to get friends list (Not used)
+export async function fetchFriends() {
+    const res = await fetch('/api/friends');
+    if (!res.ok) {
+        showError('Failed to fetch friends list');
+        return;
+    }
+    const data = await res.json();
+    if (!Array.isArray(data)) {
+        showError('Invalid friends list data');
+        return;
+    }
+
+    // update friendsItems
+
+
+
 }
 
 export function renderFriends() {

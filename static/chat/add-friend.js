@@ -1,3 +1,6 @@
+import { showError } from './error.js';
+
+const addFriendInput = document.getElementById('add-friend-input');
 const addFriendResults = document.getElementById('add-friend-results');
 
 
@@ -108,3 +111,47 @@ const createUserRow = ({
     userRow.appendChild(userRowButton);
     return userRow;
 }
+
+
+
+function renderSearchResults(results) {
+    addFriendResults.replaceChildren();
+    if (!results.length) {
+        addFriendResults.innerHTML = '<p class="modal-hint">No users found for "' + addFriendInput.value.trim() + '".</p>';
+        return;
+    }
+    addFriendResults.append(...results.map(createUserRow)); //?????
+}
+
+export async function fetchSearchUser(queryName) {
+    try {
+        const response = await fetch(`/api/users/search?name=${encodeURIComponent(queryName)}`);
+        if (!response.ok) {
+          showError('Failed to search users');
+          return [];
+        }
+        const data = await response.json();
+        if (!Array.isArray(data)) {
+            showError('Invalid search results');
+            return [];
+        }
+        return data;
+    } catch (error) {
+        showError('An error occurred while searching users');
+        return [];
+    }
+
+}
+
+
+
+addFriendInput.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const query = addFriendInput.value.trim();
+    if (!query) {
+        addFriendResults.innerHTML = '<p class="modal-hint">Type a name or handle to find people.</p>';
+        return;
+    }
+    const results = await fetchSearchUser(query);
+    renderSearchResults(results);
+});
