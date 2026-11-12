@@ -90,7 +90,6 @@ class ConversationRepository(ABC):
 
         xoá khỏi channel_members. member_count, tier và chuyển owner do trigger DB lo.
         Idempotent: không phải thành viên thì không lỗi.
-        Trả về số thành viên còn lại (0 nghĩa là nhóm đã trống, để service nhờ daemon dọn dữ liệu).
         """
 
     @abstractmethod

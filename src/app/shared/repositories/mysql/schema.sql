@@ -6,7 +6,6 @@ USE chatapp;
 CREATE TABLE users (
     user_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
-    displayname VARCHAR(50) NOT NULL DEFAULT '',
     password_hash VARCHAR(255) NOT NULL,
     avatar_url VARCHAR(2048),
     online_status ENUM('online', 'idle', 'offline', 'do_not_disturb') 
