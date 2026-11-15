@@ -1,4 +1,4 @@
-import { showError } from './error.js';
+import { showError } from '../error.js';
 
 const addFriendInput = document.getElementById('add-friend-input');
 const addFriendResults = document.getElementById('add-friend-results');

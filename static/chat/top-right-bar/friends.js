@@ -1,4 +1,4 @@
-import { showError } from './error.js';
+import { showError } from '../error.js';
 
 /*
 <!-- ===== Modal: Friends List ===== -->

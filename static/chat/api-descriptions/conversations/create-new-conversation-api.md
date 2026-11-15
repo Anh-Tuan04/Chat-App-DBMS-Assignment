@@ -106,7 +106,7 @@ The HTTP status code tells the client what kind of error it is, so the body has 
 
 | Status | When | Example `message` |
 |--------|------|-------------------|
-| `400` | `user_id` is missing, not an integer, or is the logged-in user; or `message` is missing, empty, only whitespace, or too long | `"Message must not be empty"` |
+| `400` | `user_id` is missing, not an integer, or is the logged-in user only whitespace, or too long | `user_id is missing` |
 | `401` | `Cookie` header is missing, or the session is invalid or expired | `"Not logged in"` |
 | `404` | Target user does not exist, or a block exists between the two users | `"User not found"` |
 | `409` | A direct conversation between the two users already exists | `"Conversation already exists"` |
@@ -116,6 +116,6 @@ The HTTP status code tells the client what kind of error it is, so the body has 
 
 ```json
 {
-  "message": "Message must not be empty"
+  "message": "user_id is missing"
 }
 ```

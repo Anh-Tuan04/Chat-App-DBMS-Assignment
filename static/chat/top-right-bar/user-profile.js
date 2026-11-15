@@ -1,4 +1,4 @@
-import { showToast } from "./toast.js"
+import { showToast } from "../toast.js"
 /* Avatar menu (top right): Profile, Settings, Log out. Load after chat.js. */
 
 const userAvatar = document.querySelector('.user-avatar');

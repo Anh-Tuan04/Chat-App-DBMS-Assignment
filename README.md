@@ -86,21 +86,22 @@ TemplateFileStructure/
 │       ├── chat.css
 │       ├── chat.js
 │       ├── conversation.js
-│       ├── add-friend.js
 │       ├── error.js
-│       ├── friends.js
 │       ├── toast.js
-│       ├── user-profile.js
 │       ├── conversations/
 │       │   ├── create-new-conversation-api.md
 │       │   └── get-conversations-api.md
-│       ├── notifications/
-│       │   └── notifications.js
 │       ├── relationships/
 │       │   ├── accept-friend-api.md
 │       │   ├── get-friend-request-api.md
 │       │   ├── get-friends-api.md
 │       │   └── make-friend-api.md
+│       ├── top-right-bar/
+│       │   ├── add-friend.js
+│       │   ├── create-group.js
+│       │   ├── friends.js
+│       │   ├── notifications.js
+│       │   └── user-profile.js
 │       └── users/
 │           └── search-user-api.md
 ```
@@ -205,10 +206,12 @@ This is a separate user route/service package currently registered by
 | `static/auth/register/`   | Registration assets and registration API notes |
 | `static/auth/logout/`     | Logout API notes                               |
 | `static/chat/`            | Chat UI assets and feature API notes           |
+| `static/chat/top-right-bar/` | Top-right chat controls and related scripts |
 
 The frontend is split into feature files under `static/chat/`. For example,
-conversation behavior is in `conversation.js`, friend behavior is in
-`friends.js`, and profile-menu behavior is in `user-profile.js`.
+conversation behavior is in `conversation.js`, while the friend, notification,
+group, and profile-menu behavior is organized under
+`static/chat/top-right-bar/`.
 
 ---
 
