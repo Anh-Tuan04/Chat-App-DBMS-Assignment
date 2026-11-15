@@ -58,7 +58,6 @@ class LastMessage:
 
 
 class ConversationRepository(ABC):
-    # ================================================================== danh tính và thành viên (MySQL)
     @abstractmethod
     def get(self, conversation_id: int) -> Conversation | None:
         """Mục đích  : Lấy thông tin một hội thoại (loại, cặp người nếu direct, tên nếu group).
@@ -91,7 +90,6 @@ class ConversationRepository(ABC):
 
         xoá khỏi channel_members. member_count, tier và chuyển owner do trigger DB lo.
         Idempotent: không phải thành viên thì không lỗi.
-        Trả về số thành viên còn lại (0 nghĩa là nhóm đã trống, để service nhờ daemon dọn dữ liệu).
         """
 
     @abstractmethod
@@ -167,7 +165,8 @@ class ConversationRepository(ABC):
             AlreadyExists: đã có (hai request đồng thời cùng tạo); người gọi nên find_direct lại.
         """
 
-    # ================================================================== danh sách hội thoại của user (Cassandra hoặc MySQL)
+
+    #Cassandra part
     @abstractmethod
     def list_refs(self, user_id: int) -> list[ConversationRef]:
         """Mục đích  : Lấy mọi hội thoại trong danh sách của user, kèm mốc đọc và mốc xoá.
