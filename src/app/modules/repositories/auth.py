@@ -14,7 +14,7 @@ class Credentials:
 
 class AuthRepository(ABC):
     @abstractmethod
-    def create_user(self, username: str, password_hash: str) -> int:
+    def create_user(self, username: str, display_name:str, password_hash: str) -> int:
         """Mục đích  : Lưu một tài khoản mới (username và mật khẩu đã băm).
         -> Chức năng: Đăng ký tài khoản (AuthService.register).
 

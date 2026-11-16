@@ -4,7 +4,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
-from app.shared.error import AlreadyExists, Blocked, InvalidArgument, NotFound, PermissionDenied
+from app.shared.error import AlreadyExists, Blocked, BadRequest, NotFound, Forbidden
 from app.modules.repositories.conversations import (
     Conversation,
     ConversationRef,
@@ -44,21 +44,9 @@ class ConversationSummary:
     unread_count: int                   
 
 
-@dataclass(frozen=True, slots=True)
-class ConversationCursor:
-    sort_at: datetime
-    conversation_id: int
-
-
-@dataclass(frozen=True, slots=True)
-class ConversationPage:
-    items: list[ConversationSummary]
-    next_cursor: ConversationCursor | None
-
-
 class ConversationService:
-    DEFAULT_PAGE_SIZE = 30
-    MAX_PAGE_SIZE = 100
+    MAX_CONVERSATIONS = 100         # không phân trang: lấy tối đa từng này hội thoại mới nhất
+    WRITE_ATTEMPTS = 3              # số lần thử ghi vào danh sách (Cassandra) trước khi bỏ cuộc
     PREVIEW_MAX_LEN = 100
     UNREAD_CAP = 99
     MAX_GROUP_NAME_LEN = 100
@@ -79,11 +67,7 @@ class ConversationService:
         self._notifications = notifications
 
     def get_for_member(self, conversation_id: int, actor_id: int) -> Conversation:
-        """ Check user request conversation via URL
-        Raises:
-            NotFound: hội thoại không tồn tại.
-            PermissionDenied: actor không phải thành viên.
-        """
+        """Return a conversation after checking the actor may access it."""
         conv = self._conversations.get(conversation_id)
         if conv is None:
             raise NotFound("Conversation not found")
@@ -93,50 +77,36 @@ class ConversationService:
             else self._conversations.is_group_member(conversation_id, actor_id)
         )
         if not is_member:
-            raise PermissionDenied("Not a member of this conversation")
+            raise Forbidden("Not a member of this conversation")
         return conv
 
-    def list_for_user(
-        self,
-        actor_id: int,
-        limit: int | None = None,
-        cursor: ConversationCursor | None = None,
-    ) -> ConversationPage:
-        """Hội thoại của actor, mới nhất lên đầu (theo tin cuối), phân trang bằng cursor."""
-        limit = min(max(limit or self.DEFAULT_PAGE_SIZE, 1), self.MAX_PAGE_SIZE)
-
+    def list_for_user(self, actor_id: int) -> list[ConversationSummary]:
+        """List the actor's conversations, newest first, capped at MAX_CONVERSATIONS."""
         refs = self._conversations.list_refs(actor_id)
         if not refs:
-            return ConversationPage([], None)
+            return []
         ref_by_id = {r.conversation_id: r for r in refs}
         ids = list(ref_by_id)
 
-        # Get rồi sort
         previews = self._conversations.get_last_messages(ids)
 
         rows: list[tuple[datetime, int, LastMessage | None]] = []
         for cid in ids:
             p = previews.get(cid)
             if p is not None and p.message_id <= (ref_by_id[cid].cleared_until_message_id or 0):
-                continue            
+                continue                      # đã xoá phía mình và chưa có tin mới hơn mốc
             rows.append((p.sent_at if p else _EPOCH, cid, p))
 
         rows.sort(key=lambda r: (r[0], r[1]), reverse=True)
-        if cursor is not None:
-            pos = (cursor.sort_at, cursor.conversation_id)
-            rows = [r for r in rows if (r[0], r[1]) < pos]
+        return self._summaries(actor_id, rows[: self.MAX_CONVERSATIONS], ref_by_id)
 
-        page, rest = rows[:limit], rows[limit:]
-        if not page:
-            return ConversationPage([], None)
-
-        items = self._summaries(actor_id, page, ref_by_id)
-        last = page[-1]
-        next_cursor = ConversationCursor(last[0], last[1]) if rest else None
-        return ConversationPage(items, next_cursor)
+    def cleared_until(self, actor_id: int, conversation_id: int) -> int:
+        """Return the actor's history-clear marker for a conversation, or 0."""
+        ref = self._conversations.get_ref(actor_id, conversation_id)
+        return (ref.cleared_until_message_id or 0) if ref else 0
 
     def get_summary(self, actor_id: int, conversation_id: int) -> ConversationSummary:
-        """Dùng cho 201 Create Conversation"""
+        """Return the summary of one conversation for the actor."""
         self.get_for_member(conversation_id, actor_id)
         ref = self._conversations.get_ref(actor_id, conversation_id)
         if ref is None:
@@ -153,7 +123,7 @@ class ConversationService:
         page: list[tuple[datetime, int, LastMessage | None]],
         ref_by_id: dict[int, ConversationRef],
     ) -> list[ConversationSummary]:
-        """Ghép tên/avatar/trạng thái/unread cho các hội thoại trong trang (MySQL + đếm unread chỉ cho trang này)."""
+        """Build conversation summaries with names, avatars, status and unread counts."""
         convs = self._conversations.get_many([cid for _, cid, _ in page])
         user_ids: set[int] = set()
         for _, cid, p in page:
@@ -177,7 +147,7 @@ class ConversationService:
                     continue
                 receiver_id = conv.other_member(actor_id)
                 other = users.get(receiver_id)
-                name = other.username if other else "[deleted user]"
+                name = other.display_name if other else "[deleted user]"
                 avatar = other.avatar_url if other else None
             else:
                 name, avatar = conv.name or "", None
@@ -214,7 +184,7 @@ class ConversationService:
         return self._messages.count_after(ref.conversation_id, baseline, actor_id, self.UNREAD_CAP)
 
     def record_new_message(self, conv: Conversation, msg: Message) -> None:
-        """Cập nhật preview và coi như người gửi đã đọc tới tin này."""
+        """Update the preview for a new message and mark it read for its sender."""
         self._conversations.record_new_message(
             conv.conversation_id,
             LastMessage(msg.message_id, msg.sender_id, msg.content, msg.created_at),
@@ -222,8 +192,7 @@ class ConversationService:
         self._conversations.mark_read(msg.sender_id, conv.conversation_id, msg.message_id)
 
     def on_message_deleted(self, conversation_id: int, message_id: int) -> None:
-        """MessageService gọi sau khi xoá (thu hồi) một tin. Nếu đó là tin cuối thì preview lùi về
-        tin trước đó, hoặc bị xoá nếu hội thoại hết tin."""
+        """Move the preview back when the last message of a conversation is deleted."""
         current = self._conversations.get_last_messages([conversation_id]).get(conversation_id)
         if current is None or current.message_id != message_id:
             return                                  # không phải tin cuối: preview không đổi
@@ -234,8 +203,19 @@ class ConversationService:
             LastMessage(latest.message_id, latest.sender_id, latest.content, latest.created_at) if latest else None,
         )
 
+    def on_message_edited(self, conversation_id: int, msg: Message) -> None:
+        """Update the preview when the last message of a conversation is edited."""
+        current = self._conversations.get_last_messages([conversation_id]).get(conversation_id)
+        if current is None or current.message_id != msg.message_id:
+            return
+        self._conversations.replace_last_message(
+            conversation_id,
+            msg.message_id,
+            LastMessage(msg.message_id, msg.sender_id, msg.content, msg.created_at),
+        )
+
     def mark_read(self, actor_id: int, conversation_id: int, last_message_id: int) -> None:
-        """`last_message_id` là tin cuối client đang hiển thị (không phải tin mới nhất trên server)."""
+        """Mark a conversation as read up to a given message."""
         self.get_for_member(conversation_id, actor_id)
         ref = self._conversations.get_ref(actor_id, conversation_id)
         if ref is None:
@@ -249,97 +229,106 @@ class ConversationService:
             self._conversations.mark_read(actor_id, conversation_id, value)
 
     def delete_for_me(self, actor_id: int, conversation_id: int) -> None:
-        """Xoá hội thoại phía mình: đặt mốc xoá = tin cuối hiện tại. Người khác không bị ảnh hưởng.
-        Có tin mới thì hội thoại tự hiện lại và chỉ thấy tin sau mốc."""
-        conv = self.get_for_member(conversation_id, actor_id)
+        """Clear the conversation history for the actor only."""
+        self.get_for_member(conversation_id, actor_id)
         if self._conversations.get_ref(actor_id, conversation_id) is None:
             raise NotFound("Conversation is not in your list")
         last = self._conversations.get_last_messages([conversation_id]).get(conversation_id)
         if last is None:
             return                                   # chưa có tin nhắn nào để xoá
         self._conversations.clear_history(actor_id, conversation_id, last.message_id)
-        
 
     def leave_group(self, actor_id: int, conversation_id: int) -> None:
         conv = self.get_for_member(conversation_id, actor_id)
         if conv.is_direct:
-            raise InvalidArgument("Cannot leave a direct conversation")
-        remaining = self._conversations.remove_group_member(conversation_id, actor_id)
+            raise BadRequest("Cannot leave a direct conversation")
+        # MySQL là nguồn đúng nên làm trước (owner rời thì repository tự chuyển quyền). Không có transaction giữa hai DB.
+        self._conversations.remove_group_member(conversation_id, actor_id)
         try:
-            self._conversations.remove_from_list(actor_id, conversation_id)
+            self._retry(lambda: self._conversations.remove_from_list(actor_id, conversation_id))
         except Exception:
             # Chỉ còn một dòng thừa trong danh sách; get_for_member vẫn chặn truy cập.
             log.exception("remove from user list failed: user=%s conv=%s", actor_id, conversation_id)
-        # if remaining == 0:
-        #     self._conversations.delete_conversation(conversation_id)
 
     def create_direct(self, actor_id: int, other_id: int) -> Conversation:
-        """Tạo hội thoại direct và đưa vào danh sách của cả hai người. KHÔNG tự gửi tin: MessageService.
-        start_direct_conversation gọi hàm này rồi gửi tin đầu tiên (API: chỉ tạo cùng tin đầu tiên).
-
-        Lỗi theo API: tự nhắn với chính mình -> 400; người kia không tồn tại HOẶC có chặn -> 404 "User not found";
-        đã có hội thoại -> 409 "Conversation already exists"."""
+        """Create a direct conversation and add it to both users' lists."""
         if other_id == actor_id:
-            raise InvalidArgument("Cannot start a conversation with yourself")
+            raise BadRequest("Cannot start a conversation with yourself")
         if other_id not in self._users.get_many([other_id]) or self._relationships.is_blocked_either_way(actor_id, other_id):
             raise NotFound("User not found")
-        if self._conversations.find_direct(actor_id, other_id) is not None:
+
+        existing = self._conversations.find_direct(actor_id, other_id)
+        if existing is not None:
+            self._ensure_listed(existing.conversation_id, "direct", (actor_id, other_id))
             raise AlreadyExists("Conversation already exists")
 
         try:
             conv = self._conversations.create_direct(actor_id, other_id)       # MySQL (khoá duy nhất cho cặp)
         except AlreadyExists as e:                                             # hai request đồng thời
+            raced = self._conversations.find_direct(actor_id, other_id)
+            if raced is not None:
+                self._ensure_listed(raced.conversation_id, "direct", (actor_id, other_id))
             raise AlreadyExists("Conversation already exists") from e
         except Blocked as e:
             raise NotFound("User not found") from e
-        for uid in (actor_id, other_id):                                       # danh sách từng người (Cassandra / MySQL)
-            try:
-                self._conversations.add_to_list(uid, conv.conversation_id, "direct")
-            except Exception:
-                log.exception("add_to_list failed: user=%s conv=%s", uid, conv.conversation_id)
+        self._ensure_listed(conv.conversation_id, "direct", (actor_id, other_id))
         return conv
 
     def create_group(self, actor_id: int, name: str, member_ids: list[int]) -> Conversation:
         name = (name or "").strip()
         if not name or len(name) > self.MAX_GROUP_NAME_LEN:
-            raise InvalidArgument(f"Group name must be 1-{self.MAX_GROUP_NAME_LEN} characters")
+            raise BadRequest(f"Group name must be 1-{self.MAX_GROUP_NAME_LEN} characters")
         others = sorted({m for m in member_ids if m != actor_id})
         if len(others) > self.MAX_INITIAL_MEMBERS:
-            raise InvalidArgument(f"At most {self.MAX_INITIAL_MEMBERS} initial members")
+            raise BadRequest(f"At most {self.MAX_INITIAL_MEMBERS} initial members")
         if others and len(self._users.get_many(others)) != len(others):
             raise NotFound("Some users do not exist")
-        #MySQL
-        conv = self._conversations.create_group(name, actor_id, others)   
-        #Cassandra
-        for uid in [actor_id, *others]:
-            try:
-                self._conversations.add_to_list(uid, conv.conversation_id, "group")
-            except Exception:
-                log.exception("add_to_list failed: user=%s conv=%s", uid, conv.conversation_id)
+
+        conv = self._conversations.create_group(name, actor_id, others)         # MySQL, một transaction
+        # Danh sách từng người (Cassandra), người tạo trước. Nhóm không có đường "409 rồi ghi bù" như direct, nên
+        # mỗi dòng được thử lại WRITE_ATTEMPTS lần; hỏng hẳn thì chỉ log (người đó vẫn là thành viên, bấm vào được).
+        self._ensure_listed(conv.conversation_id, "group", (actor_id, *others))
         for uid in others:
             self._notify_added(uid, conv.conversation_id)
         return conv
 
     def add_member(self, actor_id: int, conversation_id: int, user_id: int) -> None:
-        """Thành viên mới không thấy tin cũ (mốc ẩn = tin cuối hiện tại)."""
+        """Add a user to a group without showing them earlier messages."""
         conv = self.get_for_member(conversation_id, actor_id)
         if conv.is_direct:
-            raise InvalidArgument("Cannot add members to a direct conversation")
+            raise BadRequest("Cannot add members to a direct conversation")
         if not self._users.get_many([user_id]):
             raise NotFound("User not found")
 
         self._conversations.add_group_member(conversation_id, user_id)    # AlreadyExists
         last = self._conversations.get_last_messages([conversation_id]).get(conversation_id)
         try:
-            self._conversations.add_to_list(
+            self._retry(lambda: self._conversations.add_to_list(
                 user_id, conversation_id, "group",
                 cleared_until_message_id=last.message_id if last else None,
-            )
+            ))
         except Exception:
             log.exception("add_to_list failed: user=%s conv=%s", user_id, conversation_id)
         self._notify_added(user_id, conversation_id)
 
-    # nội bộ
+    # ------------------------------------------------------------------ nội bộ
+    def _retry(self, fn) -> None:
+        for attempt in range(self.WRITE_ATTEMPTS):
+            try:
+                fn()
+                return
+            except Exception:
+                if attempt == self.WRITE_ATTEMPTS - 1:
+                    raise
+
+    def _ensure_listed(self, conversation_id: int, conversation_type: str, user_ids) -> None:
+        """Add a conversation to each user's list, logging any failure."""
+        for uid in user_ids:
+            try:
+                self._retry(lambda: self._conversations.add_to_list(uid, conversation_id, conversation_type))
+            except Exception:
+                log.exception("add_to_list failed: user=%s conv=%s", uid, conversation_id)
+
     def _notify_added(self, user_id: int, conversation_id: int) -> None:
         try:
             self._notifications.notify_added_to_group(user_id, conversation_id)
