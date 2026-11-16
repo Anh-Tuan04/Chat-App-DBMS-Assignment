@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS messages_by_conversation (
     content TEXT,
     created_at TIMESTAMP,
     edited_at TIMESTAMP,
-    deleted_by SET<BIGINT>,
+    deleted_by SET<BIGINT>,            -- user đã chọn "xoá phía tôi" tin này; chỉ thêm phần tử (+), không đọc trước
     PRIMARY KEY ((conversation_id, bucket), message_id)
 ) WITH CLUSTERING ORDER BY (message_id DESC);
 
@@ -52,4 +52,3 @@ CREATE TABLE IF NOT EXISTS last_message_info_by_conversation (
     last_message_sender_id BIGINT,
     last_message_at TIMESTAMP
 );
-
