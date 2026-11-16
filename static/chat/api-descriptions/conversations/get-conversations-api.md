@@ -1,4 +1,3 @@
-
 # Conversations API
  
 ## Get Conversation List
@@ -63,7 +62,8 @@ The array is sorted by most recent activity: conversations are ordered by `lates
       "message_type": "text",
       "content": "See you tomorrow!",
       "created_at": "2026-11-16T14:20:00Z"
-    }
+    },
+    "unread_count": 3
   },
   {
     "conversation_id": 2,
@@ -71,7 +71,8 @@ The array is sorted by most recent activity: conversations are ordered by `lates
     "receiver_id": null,
     "display_name": "Project Team",
     "conversation_img_url": null,
-    "latest_message": null
+    "latest_message": null,
+    "unread_count": 0
   }
 ]
 ```
@@ -84,10 +85,11 @@ The array is sorted by most recent activity: conversations are ordered by `lates
 | `display_name` | string | Other user's display name for `direct`. Channel name for `group` |
 | `conversation_img_url` | string \| null | Other user's avatar URL for `direct`. Channel image URL for `group`. `null` if not set |
 | `latest_message` | object \| null | Most recent message in the conversation. `null` if the conversation has no messages yet (for example a new group) |
+| `unread_count` | integer \| null | Number of messages in the conversation that the logged-in user has not read yet, not counting messages the user sent. `0` if everything is read or there are no messages. But null for now because of not implementing |
  
-**`latest_message` fields** (place null now. Will implement later)
+**`latest_message` fields**
  
-Present only when `latest_message` is not `null`. These fields are the same as one item of the Get Messages response, so the client can use one message renderer for both.
+Present only when `latest_message` is not `null`. (not implement now. So always null)
  
 | Field | Type | Description |
 |-------|------|-------------|
