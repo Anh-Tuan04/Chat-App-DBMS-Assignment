@@ -1466,3 +1466,6 @@ img { display: block; }
 .friend-avatar-wrap .status-dot {
   box-shadow: 0 0 0 2px var(--color-card-bg);
 }
+
+.btn-danger { background: transparent; color: var(--color-danger, #e5484d); border: 1px solid currentColor; }
+.btn-danger:hover:not(:disabled) { background: rgba(229, 72, 77, 0.12); }

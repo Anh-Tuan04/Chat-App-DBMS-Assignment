@@ -1,4 +1,5 @@
 import { showError } from '../error.js';
+import { showToast } from '../toast.js';
 
 /*
 <!-- ===== Modal: Friends List ===== -->
@@ -25,6 +26,7 @@ import { showError } from '../error.js';
           <div class="user-row-info">
             <span class="user-row-name">Gabriel Federick</span>
             <span class="user-row-sub">Online</span>
+            <button class="btn btn-danger" type="button" data-action="remove-friend">Remove</button>
           </div>
         </div>
 
@@ -38,6 +40,7 @@ import { showError } from '../error.js';
             <span class="user-row-name">Gabriel Federick</span>
             <span class="user-row-sub">Away</span>
           </div>
+          <button class="btn btn-danger" type="button" data-action="remove-friend">Remove</button>
         </div>
 
       </div>
@@ -129,6 +132,13 @@ function createFriendRow({ id, initials, name, state, avatarUrl }) {
     info.appendChild(subLabel);
     friendRow.appendChild(info);
 
+    const removeButton = document.createElement('button');
+    removeButton.classList.add('btn', 'btn-danger');
+    removeButton.type = 'button';
+    removeButton.setAttribute('data-action', 'remove-friend');
+    removeButton.textContent = 'Remove';
+    friendRow.appendChild(removeButton);
+
     return friendRow;
 }
 
@@ -161,3 +171,14 @@ export function renderFriends() {
         friendsList.append(createFriendRow(friend));
     });
 }
+
+
+
+friendsList.addEventListener('click', function (event) {
+    const button = event.target.closest('[data-action="remove-friend"]');
+    if (!button) return;
+    const row = button.closest('[data-friend-list-id]');
+    // removeFriendHandle(row.dataset.friendListId); // not implemented yet
+    showToast(`Friend naming ${friendsItems.find(f => f.id === parseInt(row.dataset.friendListId)).name} removed`);
+
+})
