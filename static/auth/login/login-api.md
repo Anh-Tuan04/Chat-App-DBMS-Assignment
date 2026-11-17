@@ -59,7 +59,7 @@ None.
 | Header | Value | Description |
 |--------|-------|-------------|
 | `Content-Type` | `application/json` | Body format |
-| `Set-Cookie` | `session=<session_id>; HttpOnly; Path=/; SameSite=Lax` | Session cookie, only on `200`. The browser stores it automatically |
+| `Set-Cookie` | `user_id=<user_id>; HttpOnly; Path=/; SameSite=Lax` | Session cookie, only on `200`. The browser stores it automatically |
 
 #### 200 OK — Login success
 
@@ -83,7 +83,7 @@ The body has no token. Authentication for later requests uses the session cookie
 
 | Header (on later requests) | Value | Description |
 |----------------------------|-------|-------------|
-| `Cookie` | `session=<session_id>` | 
+| `Cookie` | `user_id=<user_id>` | 
 <!-- Sent automatically by the browser. With `fetch`, use `credentials: "include"` for cross-origin calls --> |
 
 #### Error Responses

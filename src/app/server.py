@@ -1,5 +1,9 @@
 from pathlib import Path
-from flask import Flask, jsonify
+from flask import Flask
+from werkzeug.exceptions import HTTPException
+import os
+
+from utils import SkippableSessionInterface, error_response
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 STATIC_DIR = BASE_DIR / "static"
@@ -24,6 +28,18 @@ def create_app() -> Flask:
         static_url_path='/static',
         # template_folder=str(TEMPLATES_DIR)
     )
+
+    # new key every startup to force new login, unreliable
+    app.config["SECRET_KEY"] = os.urandom(32) 
+    app.config["SESSION_COOKIE_HTTPONLY"] = True
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+
+    app.session_interface = SkippableSessionInterface()
+
+    # Force flask's abort to also not set cookie
+    @app.errorhandler(HTTPException)
+    def handle_http_error(e):
+        return error_response(e.description, e.code)
 
     # Register controller blueprints
     app.register_blueprint(auth_bp)

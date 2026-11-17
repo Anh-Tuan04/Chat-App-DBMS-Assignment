@@ -1,8 +1,8 @@
-from flask import Blueprint, request, jsonify, send_from_directory
+from flask import Blueprint, request, jsonify, send_from_directory, session
 from pathlib import Path
 import datetime
 
-# TEMPLATE_DIR = Path(__file__).resolve().parents[3] / "templates"
+from ...utils import error_response, login_required
 
 auth_bp = Blueprint('auth_bp', __name__, url_prefix='/api/auth/')
 
@@ -20,27 +20,33 @@ def register():
     username = body.get('username', '')
     password = body.get('password', '')
 
+    # TODO: sanitize
+
     if not (display_name and username and password):
-        return jsonify({'message': 'Missing field'}), 400
+        return error_response('Missing field', 400)
 
     if not (isinstance(display_name, str) 
             and isinstance(username, str)
             and isinstance(password, str)):
-        return jsonify({'message': 'Wrong input type'}), 400
+        return error_response('Wrong input type', 400)
 
     if len(display_name) > 50:
-        return jsonify({'message': 'Display name too long'}), 400
+        return error_response('Display name too long', 400)
 
     if len(username) < 3:
-        return jsonify({'message': 'Username too short'}), 400
+        return error_response('Username too short', 400)
 
     if len(password) < 6:
-        return jsonify({'message': 'Password too short'}), 400
+        return error_response('Password too short', 400)
 
     if len(password) > 128:
-        return jsonify({'message': 'Password too long'}), 400
+        return error_response('Password too long', 400)
 
     # TODO: implement register service call
+    # user, err = register(username, password, display_name)
+    # if err:
+    #   return error_reponse
+
     # still a hardcoded response for testing
     user = {
         'user_id': 1,
@@ -50,3 +56,51 @@ def register():
     }
 
     return jsonify(user), 200
+
+
+@auth_bp.route('/login', methods=['POST'])
+def login():
+    """
+    Call auth service and return the user's info
+    """
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict):
+        body = {}
+
+    username = body.get('username', '')
+    password = body.get('password', '')
+
+    if not (username and password):
+        return error_response('Missing field', 400)
+
+    # TODO: sanitize, type check, constraint enforce
+
+    # TODO: call auth service
+    # user, err = login(username, password)
+    # if err:
+    #   return error_response
+    
+    # hardcoded response for now
+    user = {
+        'user_id': 1,
+        'username': username,
+        'display_name': 'Test user',
+        'avatar_url': ''
+    }
+
+    session["user_id"] = user.get("user_id")
+    return jsonify(user), 200
+
+
+@auth_bp.route('/logout', methods=['POST'])
+@login_required
+def logout():
+    user_id = session.get("user_id")
+
+    # TODO: call service
+    # err = logout(user_id)
+    # if err:
+    #   return error_response
+
+    session.clear()
+    return '', 204
