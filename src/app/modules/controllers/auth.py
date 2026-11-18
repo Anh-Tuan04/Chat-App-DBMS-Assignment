@@ -1,5 +1,4 @@
-from flask import Blueprint, request, jsonify, send_from_directory, session
-from pathlib import Path
+from flask import Blueprint, request, jsonify, session
 import datetime
 
 from ...utils import error_response, login_required
