@@ -13,7 +13,7 @@ def register():
     """
     body = request.get_json(silent=True)
     if not isinstance(body, dict):
-        body = {}
+        return error_response("Body must be a JSON object", 400)
 
     display_name = body.get('display_name', '')
     username = body.get('username', '')
@@ -42,9 +42,13 @@ def register():
         return error_response('Password too long', 400)
 
     # TODO: implement register service call
-    # user, err = register(username, password, display_name)
+    # user, err = register_service(username, password, display_name)
     # if err:
-    #   return error_reponse
+    #   match err:
+    #       case 'Username already in use':
+    #           return error_reponse(err, 409)
+    #       case _:
+    #           return error_response('Internal server error', 500)
 
     # still a hardcoded response for testing
     user = {
@@ -64,7 +68,7 @@ def login():
     """
     body = request.get_json(silent=True)
     if not isinstance(body, dict):
-        body = {}
+        return error_response("Body must be a JSON object", 400)
 
     username = body.get('username', '')
     password = body.get('password', '')
@@ -75,9 +79,13 @@ def login():
     # TODO: sanitize, type check, constraint enforce
 
     # TODO: call auth service
-    # user, err = login(username, password)
+    # user, err = login_service(username, password)
     # if err:
-    #   return error_response
+    #   match err:
+    #       case 'username or password incorrect':
+    #           return error_response(err, 401)
+    #       case _:
+    #           return error_response('Internal server error', 500)
     
     # hardcoded response for now
     user = {
@@ -97,9 +105,9 @@ def logout():
     user_id = session.get("user_id")
 
     # TODO: call service
-    # err = logout(user_id)
+    # err = logout_service(user_id)
     # if err:
-    #   return error_response
+    #   return error_response('Internal server error', 500)
 
     session.clear()
     return '', 204

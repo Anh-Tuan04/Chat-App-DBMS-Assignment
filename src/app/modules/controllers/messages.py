@@ -8,21 +8,18 @@ messages_bp = Blueprint('messages_bp', __name__, url_prefix='/api/messages')
 @messages_bp.route('/', methods=['GET'])
 @login_required
 def get_messages():
-    conversation_id = request.args.get('conversation_id', '')
+    conversation_id = request.args.get('conversation_id', 0, type=int)
     if not conversation_id:
-        return error_response('conversation_id is required', 400)
-    if not conversation_id.isdigit():
-        return error_response('conversation_id must be Integer', 400)
+        return error_response('conversation_id invalid', 400)
 
     user_id = session.get('user_id')
 
-    before = request.args.get('before', '')
+    before = request.args.get('before', '', type=str)
     if before:
-        limit = request.args.get('limit', '')
+        limit = request.args.get('limit', 0, type=int)
         if limit:
-            if not limit.isdigit():
-                return error_response('limit must be Integer', 400)
-            limit = int(limit)
+            if not isinstance(limit, int):
+                return error_response('limit invalid', 400)
             if limit < 1 or limit > 100:
                 return error_response('limit must be between 1 and 100', 400)
         else: # empty limit, default 30
@@ -37,11 +34,11 @@ def get_messages():
         pass
 
     # if err:
-    #   match err.description:
+    #   match err:
     #       case 'Conversation not found':
-    #           return error_response(err.description, 404)
+    #           return error_response(err, 404)
     #       case 'Before not valid' | 'Before not found':
-    #           return error_response(err.description, 400)
+    #           return error_response(err, 400)
     #       case _:
     #           return error_response('Internal server error', 500)
 

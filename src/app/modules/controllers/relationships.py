@@ -40,13 +40,10 @@ def friends():
 
     # Unfriend
     else:
-        friend_id = request.args.get('user_id', '')
+        friend_id = request.args.get('user_id', 0, type=int)
         if not friend_id:
-            return error_response('Missing friend id', 400)
-        if not friend_id.isdigit():
-            return error_response('Friend id must be integer', 400)
+            return error_response('friend id invalid', 400)
 
-        friend_id = int(friend_id)
         user_id = session.get('user_id')
 
         if friend_id == user_id:
@@ -54,9 +51,9 @@ def friends():
         # TODO: call service
         # err = unfriend_service(user_id, friend_id)
         # if err:
-        #   match err.description:
+        #   match err:
         #       case 'Friend not found':
-        #           return error_response(err.description, 404)
+        #           return error_response(err, 404)
         #       case _:
         #           return error_response('Internal server error', 500)
 
@@ -70,13 +67,10 @@ def friend_request():
 
     # Make friend request
     if request.method == 'POST':
-        friend_id = request.args.get('user_id', '')
+        friend_id = request.args.get('user_id', 0, type=int)
         if not friend_id:
-            return error_response('Missing friend id', 400)
-        if not friend_id.isdigit():
-            return error_response('Friend id must be integer', 400)
+            return error_response('friend if invalid', 400)
 
-        friend_id = int(friend_id)
         user_id = session.get('user_id')
 
         if friend_id == user_id:
@@ -84,11 +78,11 @@ def friend_request():
         # TODO: call service
         # err = make_friend_request_service(user_id, friend_id)
         # if err:
-        #   match err.description:
+        #   match err:
         #       case 'Friend not exist' | 'Blocked':
-        #           return error_response(err.description, 404)
+        #           return error_response(err, 404)
         #       case 'Already friend':
-        #           return error_response(err.description, 409)
+        #           return error_response(err, 409)
         #       case _:
         #           return error_response('Internal server error', 500)
 
@@ -131,21 +125,18 @@ def friend_request():
 @relationships_bp.route('/friend-requests/accept', methods=['POST'])
 @login_required
 def accept_friend_request():
-    request_id = request.args.get('request_id', '')
+    request_id = request.args.get('request_id', 0, type=int)
     if not request_id:
-        return error_response('request_id is required', 400)
-    if not request_id.isdigit():
-        return error_response('request_id must be Integer', 400)
+        return error_response('request_id invalid', 400)
 
-    request_id = int(request_id)
     user_id = session.get('user_id')
 
     # TODO: call service
     # err = accept_friend_request_service(user_id, request_id)
     # if err:
-    #   match err.description:
+    #   match err:
     #       case 'No request with this id':
-    #           return error_response(err.description, 404)
+    #           return error_response(err, 404)
     #       case _:
     #           return error_response('Internal server error', 500)
 
