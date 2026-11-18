@@ -27,7 +27,7 @@ None.
 | Header | Value | Required | Description |
 |--------|-------|----------|-------------|
 | `Content-Type` | `application/json` | Yes | Body format |
-| `Cookie` | `session=<session_id>` | Yes | Session started by Login. Sent automatically by the browser. With `fetch`, use `credentials: "include"` for cross-origin calls |
+| `Cookie` | `user_id=<user_id>` | Yes | Session started by Login. Sent automatically by the browser. With `fetch`, use `credentials: "include"` for cross-origin calls |
 | `Accept` | `application/json` | No | Response format |
 
 **Body**

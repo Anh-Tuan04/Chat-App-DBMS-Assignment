@@ -34,7 +34,7 @@ GET /api/users/search?q=john
 
 | Header | Value | Required | Description |
 |--------|-------|----------|-------------|
-| `Cookie` | `session=<session_id>` | Yes | |
+| `Cookie` | `user_id=<user_id>` | Yes | |
 | `Accept` | `application/json` | No | Response format |
 
 **Body**

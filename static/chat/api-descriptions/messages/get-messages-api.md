@@ -44,7 +44,7 @@ GET /api/messages?conversation_id=1&before=5f1c2a9e-8b7d-11ef-9c3a-0242ac120002&
 
 | Header | Value | Required | Description |
 |--------|-------|----------|-------------|
-| `Cookie` | `session=<session_id>` | Yes | Session started by Login. Sent automatically by the browser. With `fetch`, use `credentials: "include"` for cross-origin calls |
+| `Cookie` | `user_id=<user_id>` | Yes | Session started by Login. Sent automatically by the browser. With `fetch`, use `credentials: "include"` for cross-origin calls |
 | `Accept` | `application/json` | No | Response format |
 
 **Body**
