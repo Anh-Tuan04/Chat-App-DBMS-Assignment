@@ -8,7 +8,7 @@ Accept a pending friend request received by the logged-in user. The user is iden
 
 | Method | URL |
 |--------|-----|
-| `POST` | `{BASE_URL}/api/friend-requests/accept?request_id={request_id}` |
+| `POST` | `{BASE_URL}/api/relationships/friend-requests/accept?request_id={request_id}` |
 
 Example base URL: `http://localhost:5000`
 

@@ -8,7 +8,7 @@ End the friendship between the logged-in user and one of their friends. The logg
 
 | Method | URL |
 |--------|-----|
-| `DELETE` | `{BASE_URL}/api/friends?user_id={user_id}` |
+| `DELETE` | `{BASE_URL}/api/relationships/friends?user_id={user_id}` |
 
 Example base URL: `http://localhost:5000`
 

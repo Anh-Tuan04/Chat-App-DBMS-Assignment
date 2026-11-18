@@ -8,7 +8,7 @@ Get all friends of the logged-in user. The user is identified by the session coo
 
 | Method | URL |
 |--------|-----|
-| `GET` | `{BASE_URL}/api/friends` |
+| `GET` | `{BASE_URL}/api/relationships/friends` |
 
 Example base URL: `http://localhost:5000`
 
