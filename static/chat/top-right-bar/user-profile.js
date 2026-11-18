@@ -1,5 +1,7 @@
 import { showToast } from "../toast.js"
+import { showError } from "../error.js"
 /* Avatar menu (top right): Profile, Settings, Log out. Load after chat.js. */
+const BASE_URL = 'http://localhost:5000'; // Replace with your actual backend URL
 
 const userAvatar = document.querySelector('.user-avatar');
 
@@ -19,7 +21,7 @@ const userMenuItems = [
 const userMenuActions = {
   profile: function () { showToast('Profile selected'); },
   settings: function () { showToast('Settings selected'); },
-  logout: function () { showToast('Log out selected'); }
+  logout: async function () { await logoutHandler(); }
 };
 
 
@@ -129,16 +131,41 @@ function setUserMenuOpen(isOpen) {
 
 
 // handlers for user profile
-function logoutHandler() {
+async function logoutHandler() {
   // fetch logout, clear session
+  try {
+    const res = await fetch(`/api/auth/logout`, {
+      method: 'POST',
+      credentials: 'include', // Include cookies for session management
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({}),
+    });
+
+    if (res.ok) {
+      // Clear local storage
+      localStorage.clear();
+      // Redirect to login page
+      window.location.replace('/');
+    } else {
+      const errorData = await res.json();
+      const errorMessage = errorData?.message || 'Logout failed';
+      showError(errorMessage);
+    }
+
+  } catch (error) {
+    showError('Logout failed: ' + error.message);
+
+  }
 }
 
 // One click listener for the whole menu: avatar toggles it, an item runs its
 // action (data-menu-action), and a click anywhere else closes it.
-document.addEventListener('click', function (event) {
+document.addEventListener('click', async function (event) {
   const item = event.target.closest('[data-menu-action]');
   if (item) {
-    userMenuActions[item.dataset.menuAction]();
+    await userMenuActions[item.dataset.menuAction]();
     setUserMenuOpen(false);
     return;
   }

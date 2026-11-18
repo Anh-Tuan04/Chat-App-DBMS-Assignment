@@ -1,4 +1,7 @@
 (function () {
+  localStorage.clear(); // Clear local storage on page load for demo purposes
+  const BASE_URL = 'http://localhost:5000'; // Replace with your actual backend URL
+
   const registerForm = document.getElementById('register-form');
   const passwordInput = document.getElementById('signup-password');
   const passwordToggleBtn = document.getElementById('password-toggle-btn');
@@ -13,14 +16,68 @@
   // Strength levels, indexed by score - 1
   const STRENGTH_LEVELS = ['weak', 'fair', 'good', 'strong'];
 
-  // Show toast message
+  /* ---------- Toast ---------- */
+  const TOAST_DURATION_MS = 2500;
+  const TOAST_ICONS = {
+    info: 'info',
+    success: 'check_circle',
+    error: 'error',
+  };
+
+  /*
+  HTML Skeleton Reference:
+  <div class="toast toast-error" role="status" aria-live="polite">
+    <span class="material-symbols-outlined toast-icon">error</span>
+    <span class="toast-message">Login failed</span>
+  </div>
+  */
+
+  // Programmatic DOM Construction:
+  function createToast(text, type) {
+    const toast = document.createElement('div');
+    toast.className = 'toast toast-' + type;
+    toast.setAttribute('role', 'status');
+    toast.setAttribute('aria-live', 'polite');
+
+    const icon = document.createElement('span');
+    icon.className = 'material-symbols-outlined toast-icon';
+    icon.textContent = TOAST_ICONS[type];
+
+    const message = document.createElement('span');
+    message.className = 'toast-message';
+    message.textContent = text;
+
+    toast.append(icon, message);
+
+    return toast;
+  }
+
+  let activeToast = null;
   let toastTimer = null;
 
-  function showToast(text) {
-    toast.textContent = text;
-    toast.hidden = false;
+  function showToast(text, type) {
+    type = TOAST_ICONS[type] ? type : 'info';
+
+    // Only one toast at a time: replace the current one
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { toast.hidden = true; }, 2500);
+    if (activeToast) activeToast.remove();
+
+    activeToast = createToast(text, type);
+    document.body.appendChild(activeToast);
+
+    toastTimer = setTimeout(function () {
+      if (activeToast) activeToast.remove();
+      activeToast = null;
+    }, TOAST_DURATION_MS);
+  }
+
+  // Show / hide password
+  if (passwordToggleBtn && passwordInput && passwordToggleIcon) {
+    passwordToggleBtn.addEventListener('click', function () {
+      const isHidden = passwordInput.getAttribute('type') === 'password';
+      passwordInput.setAttribute('type', isHidden ? 'text' : 'password');
+      passwordToggleIcon.textContent = isHidden ? 'visibility_off' : 'visibility';
+    });
   }
 
   // Show / hide password
@@ -64,11 +121,43 @@
 
   // Prevent default submit (hook up your sign-up call here)
   if (registerForm) {
-    registerForm.addEventListener('submit', function (event) {
+    registerForm.addEventListener('submit', async function (event) {
       event.preventDefault();
-      // const displayName = document.getElementById('signup-display-name').value;
-      // const username = document.getElementById('signup-username').value;
-      // const password = passwordInput.value;
+      const displayName = document.getElementById('signup-display-name').value;
+      const username = document.getElementById('signup-username').value;
+      const password = passwordInput.value;
+
+  
+      try {
+        // Call your sign-up function here
+        let res = await fetch(`/api/auth/register`, {
+          method: 'POST',
+          credentials: 'include', // Include cookies for session management
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            displayName: displayName,
+            username: username,
+            password: password
+          }),
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          showToast(errorData.message || 'Registration failed', 'error');
+        }
+
+        //save user data to local storage
+        const userData = await res.json();
+        localStorage.setItem('user', JSON.stringify(userData));
+
+        window.location.href = '/chat'; // Redirect to chat page on success
+
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+  
     });
   }
 
@@ -77,6 +166,10 @@
     link.addEventListener('click', function (event) {
       event.preventDefault();
       // Route to link.dataset.path ("login")
+
+      if (link.dataset.path === 'login') {
+        window.location.replace('/');
+      }
     });
   });
 })();
