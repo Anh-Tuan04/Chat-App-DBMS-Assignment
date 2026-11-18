@@ -14,10 +14,10 @@ STATIC_DIR = BASE_DIR / "static"
 # Imports from controllers
 from app.modules.controllers.auth import auth_bp
 # from app.modules.controllers.conversations import conversations_bp
-# from app.modules.controllers.messages import messages_bp
+from app.modules.controllers.messages import messages_bp
 # from app.modules.controllers.notifications import notifications_bp
 from app.modules.controllers.relationships import relationships_bp
-# from app.modules.controllers.users import users_bp
+from app.modules.controllers.users import users_bp
 from app.users.routes import users_routes_bp
 
 
@@ -44,10 +44,10 @@ def create_app() -> Flask:
     # Register controller blueprints
     app.register_blueprint(auth_bp)
     # app.register_blueprint(conversations_bp)
-    # app.register_blueprint(messages_bp)
+    app.register_blueprint(messages_bp)
     # app.register_blueprint(notifications_bp)
     app.register_blueprint(relationships_bp)
-    # app.register_blueprint(users_bp)
+    app.register_blueprint(users_bp)
     app.register_blueprint(users_routes_bp)
 
     return app

@@ -40,16 +40,17 @@ def friends():
 
     # Unfriend
     else:
-        friend_id = request.args.get('user_id')
+        friend_id = request.args.get('user_id', '')
         if not friend_id:
             return error_response('Missing friend id', 400)
-        if not isinstance(friend_id, int):
+        if not friend_id.isdigit():
             return error_response('Friend id must be integer', 400)
-        if friend_id == session.get('user_id'):
-            return error_response('Cannot unfriend yourself', 400)
 
+        friend_id = int(friend_id)
         user_id = session.get('user_id')
 
+        if friend_id == user_id:
+            return error_response('Cannot unfriend yourself', 400)
         # TODO: call service
         # err = unfriend_service(user_id, friend_id)
         # if err:
@@ -69,15 +70,17 @@ def friend_request():
 
     # Make friend request
     if request.method == 'POST':
-        friend_id = request.args.get('user_id')
+        friend_id = request.args.get('user_id', '')
         if not friend_id:
             return error_response('Missing friend id', 400)
-        if not isinstance(friend_id, int):
+        if not friend_id.isdigit():
             return error_response('Friend id must be integer', 400)
-        if friend_id == session.get('user_id'):
-            return error_response('Cannot send a friend request to yourself', 400)
 
+        friend_id = int(friend_id)
         user_id = session.get('user_id')
+
+        if friend_id == user_id:
+            return error_response('Cannot send a friend request to yourself', 400)
         # TODO: call service
         # err = make_friend_request_service(user_id, friend_id)
         # if err:
@@ -128,12 +131,13 @@ def friend_request():
 @relationships_bp.route('/friend-requests/accept', methods=['POST'])
 @login_required
 def accept_friend_request():
-    request_id = request.args.get('request_id')
+    request_id = request.args.get('request_id', '')
     if not request_id:
         return error_response('request_id is required', 400)
-    if not isinstance(request_id, int):
+    if not request_id.isdigit():
         return error_response('request_id must be Integer', 400)
 
+    request_id = int(request_id)
     user_id = session.get('user_id')
 
     # TODO: call service
