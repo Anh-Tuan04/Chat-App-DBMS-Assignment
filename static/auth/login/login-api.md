@@ -77,7 +77,7 @@ None.
 | `user_id` | integer | User ID |
 | `username` | string | Username |
 | `display_name` | string | Display name |
-| `avatar_url` | string \| null | Avatar URL, null if not set |
+| `avatar_url` | string \| null | Avatar URL, null if not set, but always null now |
 
 The body has no token. Authentication for later requests uses the session cookie:
 

@@ -51,15 +51,13 @@ The body is an array, sorted by friend's display name. It is `[]` if the user ha
     "friend_id": 7,
     "friend_username": "jane_doe",
     "friend_display_name": "Jane Doe",
-    "friend_avatar_url": "https://example.com/avatars/jane.png",
-    "friend_online_status": "online"
+    "friend_avatar_url": "https://example.com/avatars/jane.png"
   },
   {
     "friend_id": 21,
     "friend_username": "mike99",
     "friend_display_name": "Mike",
-    "friend_avatar_url": null,
-    "friend_online_status": "offline"
+    "friend_avatar_url": null
   }
 ]
 ```
@@ -69,8 +67,7 @@ The body is an array, sorted by friend's display name. It is `[]` if the user ha
 | `friend_id` | integer | Friend's user ID |
 | `friend_username` | string | Friend's username |
 | `friend_display_name` | string | Friend's display name |
-| `friend_avatar_url` | string \| null | Friend's avatar URL, null if not set |
-| `friend_online_status` | string | `online`, `idle`, `offline` or `do_not_disturb` |
+| `friend_avatar_url` | string \| null | Friend's avatar URL, null if not set. But always null now |
 
 #### Error Responses
 

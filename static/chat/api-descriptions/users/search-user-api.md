@@ -75,7 +75,7 @@ The body is an array. It is `[]` if nothing matches.
 | `user_id` | integer | User ID |
 | `username` | string | Username |
 | `display_name` | string | Display name |
-| `avatar_url` | string \| null | Avatar URL, null if not set |
+| `avatar_url` | string \| null | Avatar URL, null if not set. But always null now |
 
 #### Error Responses
 

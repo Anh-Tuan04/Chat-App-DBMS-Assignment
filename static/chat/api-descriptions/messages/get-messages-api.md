@@ -66,7 +66,7 @@ The body is an array, newest message first. It is `[]` if there are no messages 
 ```json
 [
   {
-    "message_id": "5f1c2a9e-8b7d-11ef-9c3a-0242ac120002",
+    "message_id": "1234578",
     "sender_id": 7,
     "sender_display_name": "Jane Doe",
     "message_type": "text",
@@ -74,7 +74,7 @@ The body is an array, newest message first. It is `[]` if there are no messages 
     "created_at": "2026-11-16T14:20:00Z"
   },
   {
-    "message_id": "4e0b19d8-8b7d-11ef-8a2b-0242ac120002",
+    "message_id": "1234577",
     "sender_id": 1,
     "sender_display_name": "John Doe",
     "message_type": "text",
@@ -86,7 +86,7 @@ The body is an array, newest message first. It is `[]` if there are no messages 
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `message_id` | string | Message ID (Cassandra time-based UUID). Use the last item's `message_id` as `before` to load older messages |
+| `message_id` | string | Message ID. Use the last item's `message_id` as `before` to load older messages |
 | `sender_id` | integer | ID of the user who sent the message. Compare with the logged-in user to tell own messages from others |
 | `sender_display_name` | string | Display name of the sender |
 | `message_type` | string | Always `text` for now. Reserved for future types such as `image` or `file` |
