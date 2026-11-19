@@ -107,7 +107,7 @@ def logout():
     user_id = session.get("user_id")
 
     # TODO: call service
-    err = logout_service(user_id)
+    _, err = logout_service(user_id)
     if err:
         return error_response("Internal server error", 500)
 

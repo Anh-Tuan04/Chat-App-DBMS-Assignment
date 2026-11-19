@@ -4,7 +4,6 @@ from datetime import datetime, timezone
 
 from cassandra.cluster import Session
 
-from shared.error import NotFound
 from modules.repositories.messages import Message, MessagePage, MessageRepository
 from shared.repositories.cassandra.common import translate_errors as _translate_errors
 from shared.repositories.cassandra.common import utc as _utc
@@ -89,10 +88,10 @@ class CassandraMessageRepository(MessageRepository):
             self._update, (content, edited_at, conversation_id, bucket, message_id)
         )
         if not result.was_applied:  # IF EXISTS không khớp
-            raise NotFound("Message not found")
+            raise LookupError("Message not found")
         msg = self.get(conversation_id, message_id)
         if msg is None:
-            raise NotFound("Message not found")
+            raise LookupError("Message not found")
         return msg
 
     @_translate_errors

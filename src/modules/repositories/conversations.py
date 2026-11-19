@@ -107,7 +107,7 @@ class ConversationRepository(ABC):
         -> Chức năng: Thêm thành viên vào nhóm (ConversationService.add_member).
 
         Raises:
-            AlreadyExists: đã là thành viên.
+            FileExistsError: đã là thành viên.
         """
 
     @abstractmethod
@@ -134,7 +134,7 @@ class ConversationRepository(ABC):
         -> Chức năng: Đổi tên nhóm (ConversationService.rename_group).
 
         Raises:
-            NotFound: nhóm không tồn tại.
+            LookupError: nhóm không tồn tại.
         """
 
     @abstractmethod
@@ -143,7 +143,7 @@ class ConversationRepository(ABC):
         -> Chức năng: Thăng/giáng quyền admin (ConversationService.set_member_role).
 
         Raises:
-            NotFound: user không phải thành viên của nhóm.
+            LookupError: user không phải thành viên của nhóm.
         """
 
     @abstractmethod
@@ -162,7 +162,7 @@ class ConversationRepository(ABC):
 
         chuẩn hoá thứ tự như find_direct.
         Raises:
-            AlreadyExists: đã có (hai request đồng thời cùng tạo); người gọi nên find_direct lại.
+            FileExistsError: đã có (hai request đồng thời cùng tạo); người gọi nên find_direct lại.
         """
 
 
