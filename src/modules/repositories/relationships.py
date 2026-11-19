@@ -50,9 +50,9 @@ class RelationshipRepository(ABC):
 
         tạo dòng 'pending' mới (dòng 'declined' cũ nếu có thì giữ nguyên).
         Raises:
-            Blocked: có block giữa hai người, theo cả hai chiều.
-            AlreadyExists: đã có lời mời 'pending' cùng chiều.
-            NotFound: một trong hai user không tồn tại.
+            PermissionError: có block giữa hai người, theo cả hai chiều.
+            FileExistsError: đã có lời mời 'pending' cùng chiều.
+            LookupError: một trong hai user không tồn tại.
         """
 
     @abstractmethod
@@ -81,7 +81,7 @@ class RelationshipRepository(ABC):
         Nếu đã là bạn (ví dụ hai bên cùng gửi) thì vẫn xoá lời mời và trả friendship hiện có.
         Service phải kiểm tra người nhận trước khi gọi.
         Raises:
-            NotFound: lời mời không tồn tại hoặc không còn 'pending'.
+            LookupError: lời mời không tồn tại hoặc không còn 'pending'.
         """
 
     @abstractmethod
@@ -91,7 +91,7 @@ class RelationshipRepository(ABC):
 
         đặt trạng thái 'declined'.
         Raises:
-            NotFound: lời mời không tồn tại.
+            LookupError: lời mời không tồn tại.
         """
 
     @abstractmethod
@@ -158,7 +158,7 @@ class RelationshipRepository(ABC):
 
         idempotent. Trigger T7 tự xoá lời mời và friendship giữa hai người.
         Raises:
-            NotFound: một trong hai user không tồn tại.
+            LookupError: một trong hai user không tồn tại.
         """
 
     @abstractmethod

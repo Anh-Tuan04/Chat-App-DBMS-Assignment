@@ -33,7 +33,7 @@ class MessageRepository(ABC):
 
         repository tự sinh message_id và created_at.
         Raises:
-            Unavailable: DB không dùng được.
+            RuntimeError: DB không dùng được.
         """
 
     @abstractmethod
@@ -67,7 +67,7 @@ class MessageRepository(ABC):
 
         đặt edited_at; không kiểm tra người gửi (việc của service).
         Raises:
-            NotFound: tin nhắn không tồn tại.
+            LookupError: tin nhắn không tồn tại.
         """
 
     @abstractmethod

@@ -8,18 +8,16 @@ from cassandra import OperationTimedOut, ReadTimeout, WriteTimeout
 from cassandra import Unavailable as CassandraUnavailable
 from cassandra.cluster import NoHostAvailable
 
-from shared.error import Unavailable
-
 
 def translate_errors(fn):
-    """Translate errors from cassandra to Unavailable"""
+    """Translate Cassandra connectivity errors to a generic repository error."""
 
     @functools.wraps(fn)
     def wrapper(*args, **kwargs):
         try:
             return fn(*args, **kwargs)
         except (NoHostAvailable, OperationTimedOut, ReadTimeout, WriteTimeout, CassandraUnavailable) as e:
-            raise Unavailable("Store is unavailable") from e
+            raise RuntimeError("Store is unavailable") from e
 
     return wrapper
 

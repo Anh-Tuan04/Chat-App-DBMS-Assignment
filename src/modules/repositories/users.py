@@ -60,7 +60,7 @@ class UserRepository(ABC):
 
         avatar_url = None nghĩa là xoá avatar.
         Raises:
-            NotFound: user không tồn tại.
+            LookupError: user không tồn tại.
         """
 
     @abstractmethod

@@ -33,7 +33,7 @@ class NotificationRepository(ABC):
 
         repository tự sinh notification_id (tăng dần theo thời gian) và created_at; is_read = False.
         Raises:
-            Unavailable: DB không dùng được.
+            RuntimeError: DB không dùng được.
         """
 
     @abstractmethod
