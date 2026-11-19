@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from app.modules.repositories.notifications import (
+from modules.repositories.notifications import (
     Notification,
     NotificationRepository,
     NotificationType,

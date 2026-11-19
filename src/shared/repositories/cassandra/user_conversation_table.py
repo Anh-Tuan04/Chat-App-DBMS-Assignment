@@ -5,8 +5,8 @@ from collections.abc import Sequence
 from cassandra.cluster import Session
 from cassandra.query import UNSET_VALUE
 
-from app.modules.repositories.conversations import ConversationRef, LastMessage
-from app.shared.repositories.cassandra.common import micros, translate_errors, utc
+from modules.repositories.conversations import ConversationRef, LastMessage
+from shared.repositories.cassandra.common import micros, translate_errors, utc
 
 
 def _write_timestamp(message: LastMessage) -> int:

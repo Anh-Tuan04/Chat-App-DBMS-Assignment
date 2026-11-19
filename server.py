@@ -1,25 +1,30 @@
+import os
+import sys
 from pathlib import Path
-from flask import Flask
+
+from flask import Flask, request
 from flask_cors import CORS
 from werkzeug.exceptions import HTTPException
-import os
+
+BASE_DIR = Path(__file__).resolve().parent
+SRC_DIR = BASE_DIR / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
 
 from utils import SkippableSessionInterface, error_response
-
-BASE_DIR = Path(__file__).resolve().parents[2]
 STATIC_DIR = BASE_DIR / "static"
+TEMPLATE_DIR = BASE_DIR / "templates"
 # templates/ is supposed to stored jinja templates,
 # but it is currently used for plain html
-# TEMPLATES_DIR = BASE_DIR / "templates"
 
 # Imports from controllers
-from app.modules.controllers.auth import auth_bp
-from app.modules.controllers.conversations import conversations_bp
-from app.modules.controllers.messages import messages_bp
+from modules.controllers.auth import auth_bp
+from modules.controllers.conversations import conversations_bp
+from modules.controllers.messages import messages_bp
 # from app.modules.controllers.notifications import notifications_bp
-from app.modules.controllers.relationships import relationships_bp
-from app.modules.controllers.users import users_bp
-from app.users.routes import users_routes_bp
+from modules.controllers.relationships import relationships_bp
+from modules.controllers.users import users_bp
+from users.routes import users_routes_bp
 
 
 def create_app() -> Flask:
@@ -29,6 +34,17 @@ def create_app() -> Flask:
         static_url_path='/static',
         # template_folder=str(TEMPLATES_DIR)
     )
+    @app.before_request
+    def print_request():
+        print(f"Request: {request.method} {request.path}", flush=True)
+
+    @app.after_request
+    def print_response(response):
+        print(
+            f"Response: {request.method} {request.path} -> {response.status_code}",
+            flush=True,
+        )
+        return response
 
     # new key every startup to force new login, unreliable
     app.config["SECRET_KEY"] = os.urandom(32) 

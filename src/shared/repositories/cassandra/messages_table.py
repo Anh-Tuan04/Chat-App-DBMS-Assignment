@@ -4,11 +4,11 @@ from datetime import datetime, timezone
 
 from cassandra.cluster import Session
 
-from app.shared.error import NotFound
-from app.modules.repositories.messages import Message, MessagePage, MessageRepository
-from app.shared.repositories.cassandra.common import translate_errors as _translate_errors
-from app.shared.repositories.cassandra.common import utc as _utc
-from app.shared.ids import SnowflakeIdGenerator
+from shared.error import NotFound
+from modules.repositories.messages import Message, MessagePage, MessageRepository
+from shared.repositories.cassandra.common import translate_errors as _translate_errors
+from shared.repositories.cassandra.common import utc as _utc
+from shared.ids import SnowflakeIdGenerator
 
 # Kích thước bucket: 30 ngày (bucket = epoch_ms // BUCKET_MS, tức khối 30 ngày cố định chứ không phải tháng lịch).
 

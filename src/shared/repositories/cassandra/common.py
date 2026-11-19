@@ -8,7 +8,7 @@ from cassandra import OperationTimedOut, ReadTimeout, WriteTimeout
 from cassandra import Unavailable as CassandraUnavailable
 from cassandra.cluster import NoHostAvailable
 
-from app.shared.error import Unavailable
+from shared.error import Unavailable
 
 
 def translate_errors(fn):

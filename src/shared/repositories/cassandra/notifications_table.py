@@ -5,9 +5,9 @@ from datetime import datetime, timezone
 
 from cassandra.cluster import Session
 
-from app.modules.repositories.notifications import Notification, NotificationRepository
-from app.shared.repositories.cassandra.common import translate_errors, utc
-from app.shared.ids import SnowflakeIdGenerator
+from modules.repositories.notifications import Notification, NotificationRepository
+from shared.repositories.cassandra.common import translate_errors, utc
+from shared.ids import SnowflakeIdGenerator
 
 _MAX_BIGINT = 2**63 - 1
 

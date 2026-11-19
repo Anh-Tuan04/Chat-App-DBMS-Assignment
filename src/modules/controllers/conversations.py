@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, session
 
-from ...utils import error_response, login_required
+from utils import error_response, login_required
 
 conversations_bp = Blueprint('conversation_bp', __name__, url_prefix='/api/conversations')
 

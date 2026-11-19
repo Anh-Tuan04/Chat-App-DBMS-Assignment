@@ -4,10 +4,10 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
-from app.shared.error import Blocked, BadRequest, NotFound, Forbidden
-from app.modules.repositories.messages import Message, MessagePage, MessageRepository
-from app.modules.repositories.relationships import RelationshipRepository
-from app.modules.services.conversations import ConversationService, ConversationSummary
+from shared.error import Blocked, BadRequest, NotFound, Forbidden
+from modules.repositories.messages import Message, MessagePage, MessageRepository
+from modules.repositories.relationships import RelationshipRepository
+from modules.services.conversations import ConversationService, ConversationSummary
 
 log = logging.getLogger(__name__)
 

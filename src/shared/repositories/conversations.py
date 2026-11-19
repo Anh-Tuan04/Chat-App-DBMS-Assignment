@@ -2,9 +2,9 @@
 
 from __future__ import annotations
  
-from app.modules.repositories.conversations import ConversationRepository
-from app.shared.repositories.cassandra.user_conversation_table import CasssandraConversationRepo
-from app.shared.repositories.mysql.conversations_table import MySQLConversationRepo
+from modules.repositories.conversations import ConversationRepository
+from shared.repositories.cassandra.user_conversation_table import CasssandraConversationRepo
+from shared.repositories.mysql.conversations_table import MySQLConversationRepo
 
 class MixConversationRepo(MySQLConversationRepo,
                           CasssandraConversationRepo,

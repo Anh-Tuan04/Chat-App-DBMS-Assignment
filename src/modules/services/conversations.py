@@ -4,17 +4,17 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
-from app.shared.error import AlreadyExists, Blocked, BadRequest, NotFound, Forbidden
-from app.modules.repositories.conversations import (
+from shared.error import AlreadyExists, Blocked, BadRequest, NotFound, Forbidden
+from modules.repositories.conversations import (
     Conversation,
     ConversationRef,
     ConversationRepository,
     LastMessage,
 )
-from app.modules.repositories.messages import Message, MessageRepository
-from app.modules.repositories.relationships import RelationshipRepository
-from app.modules.repositories.users import UserRepository
-from app.modules.services.notifications import NotificationService
+from modules.repositories.messages import Message, MessageRepository
+from modules.repositories.relationships import RelationshipRepository
+from modules.repositories.users import UserRepository
+from modules.services.notifications import NotificationService
 
 log = logging.getLogger(__name__)
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ....modules.repositories.auth import AuthRepository, Credentials
+from modules.repositories.auth import AuthRepository, Credentials
 from .users_table import UsersTable
 
 

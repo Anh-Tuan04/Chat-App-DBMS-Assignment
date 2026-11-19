@@ -1,7 +1,7 @@
 from flask import Blueprint, send_from_directory, session, redirect, url_for
 from pathlib import Path
 
-TEMPLATE_DIR = Path(__file__).resolve().parents[3] / "templates"
+TEMPLATE_DIR = Path(__file__).resolve().parents[2] / "templates"
 
 # Create Blueprint for Auth routes
 users_routes_bp = Blueprint('users_routes', __name__, url_prefix='/')

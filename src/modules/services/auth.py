@@ -6,8 +6,8 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 
 from ..repositories.auth import AuthRepository
-from ...shared.repositories.mysql.auth_repository import MySQLAuthRepository
-from ...shared.repositories.mysql.users_table import AlreadyExists, UsersTable
+from shared.repositories.mysql.auth_repository import MySQLAuthRepository
+from shared.repositories.mysql.users_table import AlreadyExists, UsersTable
 
 class AuthService:
     def __init__(
