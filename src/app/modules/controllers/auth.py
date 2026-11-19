@@ -1,5 +1,4 @@
 from flask import Blueprint, request, jsonify, session
-import datetime
 
 from ..services.auth import login_service, logout_service, register_service
 from ...utils import error_response, login_required
@@ -45,11 +44,11 @@ def register():
     # TODO: implement register service call
     user, err = register_service(username, password, display_name)
     if err:
-      match err:
-          case "Username already in use":
-              return error_response(err, 409)
-          case _:
-              return error_response("Internal server error", 500)
+        match err:
+            case "Username already in use":
+                return error_response(err, 409)
+            case _:
+                return error_response("Internal server error", 500)
 
     # still a hardcoded response for testing
     # user = {
@@ -83,12 +82,12 @@ def login():
 
     # TODO: call auth service
     user, err = login_service(username, password)
-    if err:
-      match err:
-          case "username or password incorrect":
-              return error_response(err, 401)
-          case _:
-              return error_response("Internal server error", 500)
+    if err or user is None:
+        match err:
+            case "username or password incorrect": # This case should cover user is None
+                return error_response(err, 401)
+            case _:
+                return error_response("Internal server error", 500)
 
     # hardcoded response for now
     # user = {
@@ -110,7 +109,7 @@ def logout():
     # TODO: call service
     err = logout_service(user_id)
     if err:
-      return error_response("Internal server error", 500)
+        return error_response("Internal server error", 500)
 
     session.clear()
     return '', 204
