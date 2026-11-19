@@ -26,6 +26,9 @@ from modules.controllers.relationships import relationships_bp
 from modules.controllers.users import users_bp
 from users.routes import users_routes_bp
 
+from modules.real_time_socket import init_socketio
+from modules.real_time_socket.extensions import socketio
+
 
 def create_app() -> Flask:
     app = Flask(
@@ -34,17 +37,17 @@ def create_app() -> Flask:
         static_url_path='/static',
         # template_folder=str(TEMPLATES_DIR)
     )
-    @app.before_request
-    def print_request():
-        print(f"Request: {request.method} {request.path}", flush=True)
+    # @app.before_request
+    # def print_request():
+    #     print(f"Request: {request.method} {request.path}", flush=True)
 
-    @app.after_request
-    def print_response(response):
-        print(
-            f"Response: {request.method} {request.path} -> {response.status_code}",
-            flush=True,
-        )
-        return response
+    # @app.after_request
+    # def print_response(response):
+    #     print(
+    #         f"Response: {request.method} {request.path} -> {response.status_code}",
+    #         flush=True,
+    #     )
+    #     return response
 
     # new key every startup to force new login, unreliable
     app.config["SECRET_KEY"] = os.urandom(32) 
@@ -67,6 +70,7 @@ def create_app() -> Flask:
     app.register_blueprint(users_bp)
     app.register_blueprint(users_routes_bp)
 
+    init_socketio(app)
     return app
 
 
@@ -78,5 +82,12 @@ CORS(
     supports_credentials=True,
 )
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+
+if __name__ == "__main__":
+    socketio.run(
+        app,
+        host="0.0.0.0",
+        port=5000,
+        debug=True,
+        allow_unsafe_werkzeug=True,
+    )
