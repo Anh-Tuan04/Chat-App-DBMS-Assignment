@@ -11,7 +11,7 @@ users_routes_bp = Blueprint('users_routes', __name__, url_prefix='/')
 def index():
     # if logged in, redirect to app
     if "user_id" in session:
-        return redirect(url_for("serve_app"))
+        return redirect(url_for("users_routes.serve_app"))
     # else, log in
     return send_from_directory(TEMPLATE_DIR, 'login.html')
 
@@ -24,5 +24,5 @@ def serve_register_page():
 @users_routes_bp.route('/chat', methods=['GET'])
 def serve_app():
     if "user_id" not in session:
-        return redirect(url_for("index"))
+        return redirect(url_for("users_routes.index"))
     return send_from_directory(TEMPLATE_DIR, "chat.html")

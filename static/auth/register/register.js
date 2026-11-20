@@ -137,7 +137,7 @@
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ 
-            displayName: displayName,
+            display_name: displayName,
             username: username,
             password: password
           }),
