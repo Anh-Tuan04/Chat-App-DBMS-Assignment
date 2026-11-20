@@ -78,8 +78,8 @@ def on_message(data):
         socketio.emit('error', {'message': f'{err}'})
         return
     
-    data.add('message_id', message_id)  # must be string
-    data.add('created_at', created_at)  # must be string
+    data.add('message_id', message_id.__str__())  # must be string
+    data.add('created_at', created_at.__str__())  # must be string
     for receiver_id in receiver_ids:
         socketio.emit('receive_message', data, room=receiver_id, include_self=False)
 
