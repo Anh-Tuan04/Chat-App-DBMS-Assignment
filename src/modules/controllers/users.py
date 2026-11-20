@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify, session
 
+from modules.services.users import search_user_service
 from utils import error_response, login_required
 
 users_bp = Blueprint('users_bp', __name__, url_prefix='/api/users')
@@ -15,24 +16,24 @@ def search_user():
         return error_response('Keyword longer than allowed', 400)
 
     # TODO: call service
-    # users, err = search_user_service(search_name)
-    # if err:
-    #   return error_response('Internal server error', 500)
+    users, err = search_user_service(search_name)
+    if err:
+      return error_response('Internal server error', 500)
 
     # hardcoded response
-    users = [
-        {
-            "user_id": 7,
-            "username": "john_doe",
-            "display_name": "John Doe",
-            "avatar_url": ""
-        },
-        {
-            "user_id": 12,
-            "username": "johnny",
-            "display_name": "Johnny Smith",
-            "avatar_url": ""
-        }
-    ]
+    # users = [
+    #     {
+    #         "user_id": 7,
+    #         "username": "john_doe",
+    #         "display_name": "John Doe",
+    #         "avatar_url": ""
+    #     },
+    #     {
+    #         "user_id": 12,
+    #         "username": "johnny",
+    #         "display_name": "Johnny Smith",
+    #         "avatar_url": ""
+    #     }
+    # ]
 
     return jsonify(users), 200

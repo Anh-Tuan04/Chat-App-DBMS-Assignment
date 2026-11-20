@@ -84,3 +84,79 @@ class UsersTable:
         finally:
             if conn:
                 conn.close()
+
+    def find_by_ids(self, user_ids: list[int]) -> list[dict[str, Any]]:
+        if not user_ids:
+            return []
+        placeholders = ", ".join(["%s"] * len(user_ids))
+        sql = f"""
+            SELECT user_id, username, display_name, avatar_url
+            FROM users
+            WHERE user_id IN ({placeholders})
+        """
+        conn = None
+        try:
+            conn = get_mysql_connection()
+            with conn.cursor() as cursor:
+                cursor.execute(sql, tuple(user_ids))
+                return list(cursor.fetchall())
+        except pymysql.MySQLError as exc:
+            raise Unavailable("MySQL unavailable during find_by_ids") from exc
+        finally:
+            if conn:
+                conn.close()
+
+    def search_by_username_prefix(self, prefix: str, limit: int) -> list[dict[str, Any]]:
+        escaped = prefix.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        pattern = f"{escaped}%"
+        sql = """
+            SELECT user_id, username, display_name, avatar_url
+            FROM users
+            WHERE LOWER(username) LIKE LOWER(%s) ESCAPE '\\\\'
+            ORDER BY username ASC
+            LIMIT %s
+        """
+        conn = None
+        try:
+            conn = get_mysql_connection()
+            with conn.cursor() as cursor:
+                cursor.execute(sql, (pattern, limit))
+                return list(cursor.fetchall())
+        except pymysql.MySQLError as exc:
+            raise Unavailable("MySQL unavailable during search_by_username_prefix") from exc
+        finally:
+            if conn:
+                conn.close()
+
+    def update_avatar(self, user_id: int, avatar_url: str | None) -> bool:
+        sql = "UPDATE users SET avatar_url = %s WHERE user_id = %s"
+        conn = None
+        try:
+            conn = get_mysql_connection()
+            with conn.cursor() as cursor:
+                affected = cursor.execute(sql, (avatar_url, user_id))
+            conn.commit()
+            return affected > 0
+        except pymysql.MySQLError as exc:
+            if conn:
+                conn.rollback()
+            raise Unavailable("MySQL unavailable during update_avatar") from exc
+        finally:
+            if conn:
+                conn.close()
+
+    def update_online_status(self, user_id: int, status: str) -> None:
+        sql = "UPDATE users SET online_status = %s WHERE user_id = %s"
+        conn = None
+        try:
+            conn = get_mysql_connection()
+            with conn.cursor() as cursor:
+                cursor.execute(sql, (status, user_id))
+            conn.commit()
+        except pymysql.MySQLError as exc:
+            if conn:
+                conn.rollback()
+            raise Unavailable("MySQL unavailable during update_online_status") from exc
+        finally:
+            if conn:
+                conn.close()
