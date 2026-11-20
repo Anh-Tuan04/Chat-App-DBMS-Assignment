@@ -1,7 +1,7 @@
 # Flask Chat Server: Project Structure (AI Generated)
 
-This project is a Flask chat application. The backend is currently organized
-by technical layer under `src/app/modules`:
+This project is a Flask chat application. The backend is organized by technical
+layer under `src/modules`:
 
 `controllers -> services -> repositories`
 
@@ -19,50 +19,55 @@ API documentation files.
 ## 1. Folder tree
 
 ```text
-TemplateFileStructure/
+TemplateFileStructure_branch/
 ├── README.md
 ├── requirements.txt
-│
+├── server.py
+├── .env
+├── .gitignore
 ├── src/
-│   └── app/
-│       ├── __init__.py
-│       ├── server.py
-│       │
-│       ├── modules/
-│       │   ├── controllers/
-│       │   │   ├── auth.py
-│       │   │   ├── conversations.py
-│       │   │   ├── messages.py
-│       │   │   ├── notifications.py
-│       │   │   ├── relationships.py
-│       │   │   └── users.py
-│       │   │
-│       │   ├── services/
-│       │   │   ├── auth.py
-│       │   │   ├── conversations.py
-│       │   │   ├── messages.py
-│       │   │   ├── notifications.py
-│       │   │   ├── relationships.py
-│       │   │   └── users.py
-│       │   │
-│       │   └── repositories/
-│       │       ├── auth.py
-│       │       ├── conversations.py
-│       │       ├── messages.py
-│       │       ├── notifications.py
-│       │       ├── relationships.py
-│       │       └── users.py
-│       │
-│       ├── shared/
-│       │   └── repositories/
-│       │       ├── cassandra/
-│       │       │   └── messages.table.py
-│       │       └── mysql/
-│       │           └── conversations.table.py
-│       │
-│       └── users/
-│           ├── routes.py
-│           └── services.py
+│   ├── __init__.py
+│   ├── utils.py
+│   ├── modules/
+│   │   ├── controllers/
+│   │   │   ├── auth.py
+│   │   │   ├── conversations.py
+│   │   │   ├── messages.py
+│   │   │   ├── notifications.py
+│   │   │   ├── relationships.py
+│   │   │   └── users.py
+│   │   ├── services/
+│   │   │   ├── auth.py
+│   │   │   ├── conversations.py
+│   │   │   ├── messages.py
+│   │   │   ├── notifications.py
+│   │   │   ├── relationships.py
+│   │   │   └── users.py
+│   │   ├── repositories/
+│   │   │   ├── auth.py
+│   │   │   ├── conversations.py
+│   │   │   ├── messages.py
+│   │   │   ├── notifications.py
+│   │   │   ├── relationships.py
+│   │   │   └── users.py
+│   │   └── real_time_socket/
+│   │       ├── __init__.py
+│   │       ├── extensions.py
+│   │       ├── events/
+│   │       │   ├── connection.py
+│   │       │   ├── messages.py
+│   │       │   └── notifications.py
+│   │       └── emitters/
+│   │           └── notifications.py
+│   ├── shared/
+│   │   ├── error.py
+│   │   ├── ids.py
+│   │   └── repositories/
+│   │       ├── cassandra/
+│   │       └── mysql/
+│   └── users/
+│       ├── routes.py
+│       └── services.py
 │
 ├── templates/
 │   ├── chat.html
@@ -114,10 +119,11 @@ TemplateFileStructure/
 server.py
    │
    ▼
-create_app() in app/__init__.py
+create_app() in server.py
    │
-   ├── registers modules.controllers.auth.auth_bp
-   └── registers app.users.routes.users_routes_bp
+   ├── registers src/modules/controllers blueprints
+   ├── registers src/users/routes.py
+   └── initializes src/modules/real_time_socket
    │
    ▼
 controller / route
@@ -132,21 +138,20 @@ repository
 MySQL or Cassandra
 ```
 
-`src/app/server.py` is the development entry point. The application factory
-in `src/app/__init__.py` configures Flask's `/static` directory and registers
-the currently enabled blueprints.
+`server.py` at the workspace root is the development entry point. It adds `src`
+to Python's import path, creates the Flask application, registers the enabled
+blueprints, initializes Flask-SocketIO, and starts the server.
 
 At present, the authentication controller is enabled. The other controllers
 are present but their blueprint registrations are commented out. The separate
-`src/app/users` package is also registered directly and should be treated as a
-legacy or transitional implementation until it is merged into
-`src/app/modules`.
+`src/users` package is also registered directly and should be treated as a
+legacy or transitional implementation until it is merged into `src/modules`.
 
 ---
 
 ## 3. Backend folders and files
 
-### `src/app/modules/controllers/`
+### `src/modules/controllers/`
 
 Controllers define Flask blueprints (testing in advance), URL rules, request parsing, basic input
 validation, and HTTP responses.
@@ -160,13 +165,13 @@ validation, and HTTP responses.
 | `relationships.py` | Friend and relationship endpoints             |
 | `users.py`         | User endpoints                                |
 
-### `src/app/modules/services/`
+### `src/modules/services/`
 
 Services are the application/business-logic layer. They should receive
 validated values from controllers and coordinate repository operations without
 depending on Flask request or response objects.
 
-### `src/app/modules/repositories/`
+### `src/modules/repositories/`
 
 Repositories are grouped by feature and contain the data-access abstractions
 used by the services:
@@ -180,15 +185,24 @@ used by the services:
 | `relationships.py` | Friend and relationship persistence             |
 | `users.py`         | User persistence and lookup                     |
 
-### `src/app/shared/repositories/`
+### `src/shared/repositories/`
 
 This folder contains database-specific table implementations shared by the
 feature repositories:
 
-- `mysql/conversations.table.py` contains MySQL conversation-table access.
-- `cassandra/messages.table.py` contains Cassandra message-table access.
+- `mysql/` contains MySQL connection and table implementations.
+- `cassandra/` contains Cassandra table implementations.
+- `conversations.py` combines shared conversation repository implementations.
 
-### `src/app/users/`
+### `src/modules/real_time_socket/`
+
+This package contains Flask-SocketIO setup:
+
+- `extensions.py` creates the shared `SocketIO` instance.
+- `events/` registers connection and real-time message/notification handlers.
+- `emitters/` sends real-time notification payloads to connected clients.
+
+### `src/users/`
 
 This is a separate user route/service package currently registered by
 `create_app()`. This is used for testing before plugging in frontend.

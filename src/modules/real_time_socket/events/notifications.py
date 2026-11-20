@@ -14,5 +14,9 @@ def handle_read_notification(data):
         socketio.emit('error', {'message': 'user_id is required'})
         return
 
-    notifications.mark_as_read(notification_id, user_id)
+    _, err = notifications.mark_as_read(notification_id, user_id)
+    if err:
+        socketio.emit('error', {'message': str(err)})
+        return
+
     socketio.emit('notification_read', {'status': 'success', 'notification_id': notification_id})
