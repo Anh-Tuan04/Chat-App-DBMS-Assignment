@@ -8,6 +8,7 @@ from modules.repositories.conversations import (
     Conversation,
     ConversationRef,
     ConversationRepository,
+    GroupRole,
     LastMessage,
 )
 from modules.repositories.messages import Message, MessageRepository
@@ -18,6 +19,14 @@ from modules.services.notifications import NotificationService
 log = logging.getLogger(__name__)
 
 _EPOCH = datetime.fromtimestamp(0, tz=timezone.utc)
+
+
+def _format_utc_iso(value: datetime) -> str:
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    else:
+        value = value.astimezone(timezone.utc)
+    return value.isoformat().replace("+00:00", "Z")
 
 
 @dataclass(frozen=True, slots=True)
@@ -396,6 +405,8 @@ class ConversationService:
         self, actor_id: int, conversation_id: int, user_id: int
     ) -> tuple[None, str | None]:
         """Add a user to a group without showing them earlier messages."""
+        if isinstance(user_id, bool) or not isinstance(user_id, int) or user_id <= 0:
+            return None, "Invalid user id"
         conv, err = self.get_for_member(conversation_id, actor_id)
         if err:
             return None, err
@@ -422,6 +433,166 @@ class ConversationService:
         except Exception:
             log.exception("add group member failed: user=%s conv=%s member=%s", actor_id, conversation_id, user_id)
             return None, "Internal server error"
+
+    def list_members(
+        self,
+        actor_id: int,
+        conversation_id: int,
+        limit: int = 50,
+        after_user_id: int | None = None,
+    ) -> tuple[list[dict[str, object]] | None, str | None]:
+        conv, err = self.get_for_member(conversation_id, actor_id)
+        if err:
+            return None, err
+        if conv is None:
+            return None, "Internal server error"
+        if conv.is_direct:
+            return None, "Not a group conversation"
+        if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 100:
+            return None, "Invalid limit"
+        if after_user_id is not None and (
+            isinstance(after_user_id, bool)
+            or not isinstance(after_user_id, int)
+            or after_user_id <= 0
+        ):
+            return None, "Invalid cursor"
+
+        try:
+            members = self._conversations.list_group_members(
+                conversation_id, limit, after_user_id
+            )
+            users = self._users.get_many([member.user_id for member in members])
+            return [
+                {
+                    "user_id": member.user_id,
+                    "username": users[member.user_id].username
+                    if member.user_id in users else None,
+                    "display_name": (
+                        users[member.user_id].display_name
+                        or users[member.user_id].username
+                    ) if member.user_id in users else None,
+                    "avatar_url": users[member.user_id].avatar_url
+                    if member.user_id in users else None,
+                    "role": "owner" if member.role == "owner" else "member",
+                    "joined_at": _format_utc_iso(member.joined_at),
+                }
+                for member in members
+            ], None
+        except Exception:
+            log.exception(
+                "list group members failed: user=%s conv=%s", actor_id, conversation_id
+            )
+            return None, "Internal server error"
+
+    # def rename_group(
+    #     self, actor_id: int, conversation_id: int, name: str
+    # ) -> str | None:
+    #     if not isinstance(name, str):
+    #         return "Invalid group name"
+    #     name = name.strip()
+    #     if not name or len(name) > self.MAX_GROUP_NAME_LEN:
+    #         return f"Group name must be 1-{self.MAX_GROUP_NAME_LEN} characters"
+    #     conv, err = self.get_for_member(conversation_id, actor_id)
+    #     if err:
+    #         return err
+    #     if conv is None:
+    #         return "Internal server error"
+    #     if conv.is_direct:
+    #         return "Not a group conversation"
+
+    #     try:
+    #         if self._conversations.get_group_role(conversation_id, actor_id) != "owner":
+    #             return "Only the group owner can rename the group"
+    #         self._conversations.rename_group(conversation_id, name)
+    #         return None
+    #     except Exception:
+    #         log.exception(
+    #             "rename group failed: user=%s conv=%s", actor_id, conversation_id
+    #         )
+    #         return "Internal server error"
+
+    # def set_member_role(
+    #     self,
+    #     actor_id: int,
+    #     conversation_id: int,
+    #     user_id: int,
+    #     role: GroupRole,
+    # ) -> str | None:
+    #     if role != "member":
+    #         return "Only the member role is supported"
+    #     if isinstance(user_id, bool) or not isinstance(user_id, int) or user_id <= 0:
+    #         return "Invalid user id"
+    #     conv, err = self.get_for_member(conversation_id, actor_id)
+    #     if err:
+    #         return err
+    #     if conv is None:
+    #         return "Internal server error"
+    #     if conv.is_direct:
+    #         return "Not a group conversation"
+    #     if user_id == actor_id:
+    #         return "Cannot change your own role"
+
+    #     try:
+    #         actor_role = self._conversations.get_group_role(conversation_id, actor_id)
+    #         if actor_role != "owner":
+    #             return "Only the group owner can change member roles"
+    #         target_role = self._conversations.get_group_role(conversation_id, user_id)
+    #         if target_role is None:
+    #             return "Member not found"
+    #         if target_role == "owner":
+    #             return "Cannot change the group owner's role"
+    #         self._conversations.set_group_role(conversation_id, user_id, "member")
+    #         return None
+    #     except Exception:
+    #         log.exception(
+    #             "set group member role failed: actor=%s conv=%s member=%s",
+    #             actor_id,
+    #             conversation_id,
+    #             user_id,
+    #         )
+    #         return "Internal server error"
+
+    def kick_member(
+        self, actor_id: int, conversation_id: int, user_id: int
+    ) -> str | None:
+        if isinstance(user_id, bool) or not isinstance(user_id, int) or user_id <= 0:
+            return "Invalid user id"
+        conv, err = self.get_for_member(conversation_id, actor_id)
+        if err:
+            return err
+        if conv is None:
+            return "Internal server error"
+        if conv.is_direct:
+            return "Not a group conversation"
+        if actor_id == user_id:
+            return "Use leave_group to leave the group"
+
+        try:
+            if self._conversations.get_group_role(conversation_id, actor_id) != "owner":
+                return "Only the group owner can remove members"
+            if self._conversations.get_group_role(conversation_id, user_id) is None:
+                return "Member not found"
+            self._conversations.remove_group_member(conversation_id, user_id)
+        except Exception:
+            log.exception(
+                "kick group member failed: actor=%s conv=%s member=%s",
+                actor_id,
+                conversation_id,
+                user_id,
+            )
+            return "Internal server error"
+
+        try:
+            self._retry(
+                lambda: self._conversations.remove_from_list(user_id, conversation_id)
+            )
+        except Exception:
+            log.exception(
+                "remove kicked member from conversation list failed: user=%s conv=%s",
+                user_id,
+                conversation_id,
+            )
+        return None
 
     # ------------------------------------------------------------------ nội bộ
     def _retry(self, fn) -> None:
