@@ -1,13 +1,13 @@
 import { conversationList, createConversationItem } from './conversation.js';
-
-
-// import { addFriendResults, createUserRow } from "./add-friend.js"
+import { initializeUserSearch } from "./top-right-bar/add-friend.js";
 import { renderFriends } from "./top-right-bar/friends.js"
 
 import * as UserProfile from "./top-right-bar/user-profile.js"
 
 
 const $ = function (id) { return document.getElementById(id); };
+
+initializeUserSearch();
 
 
 /* =====================================================

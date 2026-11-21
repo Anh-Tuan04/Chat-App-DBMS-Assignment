@@ -39,6 +39,7 @@ class MySQLUserRepository(UserRepository):
                 user_id=int(row["user_id"]),
                 username=row["username"],
                 avatar_url=row.get("avatar_url"),
+                display_name=row.get("display_name"),
             )
             for row in rows
         }
@@ -50,6 +51,7 @@ class MySQLUserRepository(UserRepository):
                 user_id=int(row["user_id"]),
                 username=row["username"],
                 avatar_url=row.get("avatar_url"),
+                display_name=row.get("display_name"),
             )
             for row in rows
         ]

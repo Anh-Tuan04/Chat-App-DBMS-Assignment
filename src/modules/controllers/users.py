@@ -9,16 +9,17 @@ users_bp = Blueprint('users_bp', __name__, url_prefix='/api/users')
 @users_bp.route('/search', methods=['GET'])
 @login_required
 def search_user():
-    search_name = request.args.get('username', '', type=str)
+    search_name = request.args.get('username', '', type=str).strip()
     if not search_name:
         return error_response('Search keyword is required', 400)
     if len(search_name) > 50:
         return error_response('Keyword longer than allowed', 400)
 
-    # TODO: call service
-    users, err = search_user_service(search_name)
-    if err:
-      return error_response('Internal server error', 500)
+    users, err = search_user_service(
+        search_name, current_user_id=session.get('user_id')
+    )
+    if err or users is None:
+        return error_response('Internal server error', 500)
 
     # hardcoded response
     # users = [

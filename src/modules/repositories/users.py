@@ -24,6 +24,7 @@ class UserSummary:
     user_id: int
     username: str
     avatar_url: str | None = None
+    display_name: str | None = None
 
 
 class UserRepository(ABC):
