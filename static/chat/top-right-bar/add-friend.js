@@ -65,8 +65,6 @@ const addFriendResults = document.getElementById('add-friend-results');
             <!-- 3. already a friend -->
             <button class="btn btn-secondary" type="button" data-user-id="u2" disabled>Friends</button>
 
-            <!-- 4. this user has already sent a request -->
-            <button class="btn btn-primary" type="button" data-user-id="u2">Accept request</button>
         </div>
 */
 const createUserRow = ({
@@ -95,11 +93,13 @@ const createUserRow = ({
     const userRowName = document.createElement('span');
     userRowName.classList.add('user-row-name');
     userRowName.textContent = name;
-    const userRowHandle = document.createElement('span');
-    userRowHandle.classList.add('user-row-sub');
-    userRowHandle.textContent = `@${username}`;
+    // const userRowHandle = document.createElement('span');
+    // userRowHandle.classList.add('user-row-sub');
+    // userRowHandle.textContent = `@${username}`;
+
     userRowInfo.appendChild(userRowName);
-    userRowInfo.appendChild(userRowHandle);
+
+    // userRowInfo.appendChild(userRowHandle);
     userRow.appendChild(userRowAvatar);
     userRow.appendChild(userRowInfo);
 
@@ -114,35 +114,27 @@ const createUserRow = ({
         requestButton.classList.add('btn', 'btn-secondary');
         requestButton.textContent = 'Requested';
         requestButton.disabled = true;
-    } else if (relationship_status === 'received') {
-        requestButton.classList.add('btn', 'btn-primary');
-        requestButton.dataset.action = 'send-friend-request';
-        requestButton.textContent = 'Accept request';
-    } else if (relationship_status === 'none') {
+    } else {
         requestButton.classList.add('btn', 'btn-primary');
         requestButton.dataset.action = 'send-friend-request';
         requestButton.textContent = 'Add friend';
-    } else {
-        requestButton.classList.add('btn', 'btn-secondary');
-        requestButton.textContent = 'Unavailable';
-        requestButton.disabled = true;
     }
     userRow.appendChild(requestButton);
 
     return userRow;
 }
 
-function renderSearchResults(results) {
-    addFriendResults.replaceChildren();
-    if (!results.length) {
-        const hint = document.createElement('p');
-        hint.classList.add('modal-hint');
-        hint.textContent = `No users found for "${addFriendInput.value.trim()}".`;
-        addFriendResults.appendChild(hint);
-        return;
-    }
-    addFriendResults.append(...results.map(createUserRow));
-}
+// function renderSearchResults(results) {
+//     addFriendResults.replaceChildren();
+//     if (!results.length) {
+//         const hint = document.createElement('p');
+//         hint.classList.add('modal-hint');
+//         hint.textContent = `No users found for "${addFriendInput.value.trim()}".`;
+//         addFriendResults.appendChild(hint);
+//         return;
+//     }
+//     addFriendResults.append(...results.map(createUserRow));
+// }
 
 export async function fetchSearchUser(queryName) {
     try {
@@ -166,123 +158,130 @@ export async function fetchSearchUser(queryName) {
     }
 }
 
-function setRequestButtonState(button, label) {
-    button.disabled = true;
-    button.classList.remove('btn-primary');
-    button.classList.add('btn-secondary');
-    button.textContent = label;
-}
 
-async function sendFriendRequest(button) {
-    const userId = button.dataset.userId;
-    if (!/^\d+$/.test(userId || '')) {
-        showError('Invalid user selected');
-        return;
-    }
+addFriendInput.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const query = addFriendInput.value.trim();
 
-    button.disabled = true;
-    button.textContent = 'Sending...';
+});
 
-    let response;
-    try {
-        response = await fetch(
-            `/api/relationships/friend-request?user_id=${encodeURIComponent(userId)}`,
-            {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: { Accept: 'application/json' },
-            }
-        );
-    } catch {
-        button.disabled = false;
-        button.textContent = 'Add friend';
-        showError('Could not send friend request');
-        return;
-    }
+// function setRequestButtonState(button, label) {
+//     button.disabled = true;
+//     button.classList.remove('btn-primary');
+//     button.classList.add('btn-secondary');
+//     button.textContent = label;
+// }
 
-    let payload;
-    try {
-        payload = await response.json();
-    } catch {
-        button.disabled = false;
-        button.textContent = 'Add friend';
-        showError('Invalid response from server');
-        return;
-    }
+// async function sendFriendRequest(button) {
+//     const userId = button.dataset.userId;
+//     if (!/^\d+$/.test(userId || '')) {
+//         showError('Invalid user selected');
+//         return;
+//     }
 
-    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
-        button.disabled = false;
-        button.textContent = 'Add friend';
-        showError('Invalid response from server');
-        return;
-    }
+//     button.disabled = true;
+//     button.textContent = 'Sending...';
 
-    if (response.status === 409) {
-        if (payload.message === 'Already friend') {
-            setRequestButtonState(button, 'Friends');
-            return;
-        }
-        if (payload.message === 'Friend request already exists') {
-            setRequestButtonState(button, 'Requested');
-            return;
-        }
-    }
+//     let response;
+//     try {
+//         response = await fetch(
+//             `/api/relationships/friend-request?user_id=${encodeURIComponent(userId)}`,
+//             {
+//                 method: 'POST',
+//                 credentials: 'same-origin',
+//                 headers: { Accept: 'application/json' },
+//             }
+//         );
+//     } catch {
+//         button.disabled = false;
+//         button.textContent = 'Add friend';
+//         showError('Could not send friend request');
+//         return;
+//     }
 
-    if (!response.ok) {
-        button.disabled = false;
-        button.textContent = 'Add friend';
-        showError(payload.message || 'Could not send friend request');
-        return;
-    }
+//     let payload;
+//     try {
+//         payload = await response.json();
+//     } catch {
+//         button.disabled = false;
+//         button.textContent = 'Add friend';
+//         showError('Invalid response from server');
+//         return;
+//     }
 
-    if (Number(payload.receiver_id) !== Number(userId)
-        || !['requested', 'friends'].includes(payload.status)) {
-        button.disabled = false;
-        button.textContent = 'Add friend';
-        showError('Server returned an unexpected friend request result');
-        return;
-    }
+//     if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+//         button.disabled = false;
+//         button.textContent = 'Add friend';
+//         showError('Invalid response from server');
+//         return;
+//     }
 
-    if (payload.status === 'friends') {
-        setRequestButtonState(button, 'Friends');
-        showToast('Friend request accepted');
-    } else {
-        setRequestButtonState(button, 'Requested');
-        showToast('Friend request sent');
-    }
-}
+//     if (response.status === 409) {
+//         if (payload.message === 'Already friend') {
+//             setRequestButtonState(button, 'Friends');
+//             return;
+//         }
+//         if (payload.message === 'Friend request already exists') {
+//             setRequestButtonState(button, 'Requested');
+//             return;
+//         }
+//     }
 
-export function initializeUserSearch() {
-    let debounceTimer;
-    let searchVersion = 0;
+//     if (!response.ok) {
+//         button.disabled = false;
+//         button.textContent = 'Add friend';
+//         showError(payload.message || 'Could not send friend request');
+//         return;
+//     }
 
-    addFriendInput.addEventListener('input', () => {
-        window.clearTimeout(debounceTimer);
-        const query = addFriendInput.value.trim();
-        const currentVersion = ++searchVersion;
+//     if (Number(payload.receiver_id) !== Number(userId)
+//         || !['requested', 'friends'].includes(payload.status)) {
+//         button.disabled = false;
+//         button.textContent = 'Add friend';
+//         showError('Server returned an unexpected friend request result');
+//         return;
+//     }
 
-        if (!query) {
-            addFriendResults.replaceChildren();
-            const hint = document.createElement('p');
-            hint.classList.add('modal-hint');
-            hint.textContent = 'Type a username to find people.';
-            addFriendResults.appendChild(hint);
-            return;
-        }
+//     if (payload.status === 'friends') {
+//         setRequestButtonState(button, 'Friends');
+//         showToast('Friend request accepted');
+//     } else {
+//         setRequestButtonState(button, 'Requested');
+//         showToast('Friend request sent');
+//     }
+// }
 
-        debounceTimer = window.setTimeout(async () => {
-            const results = await fetchSearchUser(query);
-            if (currentVersion === searchVersion) {
-                renderSearchResults(results);
-            }
-        }, 250);
-    });
+// export function initializeUserSearch() {
+//     let debounceTimer;
+//     let searchVersion = 0;
 
-    addFriendResults.addEventListener('click', (event) => {
-        const button = event.target.closest(
-            'button[data-action="send-friend-request"]'
-        );
-        if (!button || button.disabled) return;
-        sendFriendRequest(button);
-    });
-}
+//     addFriendInput.addEventListener('input', () => {
+//         window.clearTimeout(debounceTimer);
+//         const query = addFriendInput.value.trim();
+//         const currentVersion = ++searchVersion;
+
+//         if (!query) {
+//             addFriendResults.replaceChildren();
+//             const hint = document.createElement('p');
+//             hint.classList.add('modal-hint');
+//             hint.textContent = 'Type a username to find people.';
+//             addFriendResults.appendChild(hint);
+//             return;
+//         }
+
+//         debounceTimer = window.setTimeout(async () => {
+//             const results = await fetchSearchUser(query);
+//             if (currentVersion === searchVersion) {
+//                 renderSearchResults(results);
+//             }
+//         }, 250);
+//     });
+
+//     addFriendResults.addEventListener('click', (event) => {
+//         const button = event.target.closest(
+//             'button[data-action="send-friend-request"]'
+//         );
+//         if (!button || button.disabled) return;
+//         sendFriendRequest(button);
+//     });
+// }

@@ -85,7 +85,7 @@ The array is sorted by most recent activity: conversations are ordered by `lates
 | `display_name` | string | Other user's display name for `direct`. Channel name for `group` |
 | `conversation_img_url` | string \| null | Other user's avatar URL for `direct`. Channel image URL for `group`. `null` if not set |
 | `latest_message` | object \| null | Most recent message in the conversation. `null` if the conversation has no messages yet (for example a new group) |
-| `unread_count` | integer \| null | Number of messages in the conversation that the logged-in user has not read yet, not counting messages the user sent. `0` if everything is read or there are no messages. But null for now because of not implementing |
+| `unread_count` | integer \| null | Number of messages in the conversation that the logged-in user has not read yet, not counting messages the user sent. |
  
 **`latest_message` fields**
  

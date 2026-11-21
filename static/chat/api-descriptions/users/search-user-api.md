@@ -59,14 +59,23 @@ The body is an array. It is `[]` if nothing matches.
     "user_id": 7,
     "username": "john_doe",
     "display_name": "John Doe",
-    "avatar_url": "https://example.com/avatars/john.png"
+    "avatar_url": "https://example.com/avatars/john.png",
+    "friend_status": "friend"
   },
   {
     "user_id": 12,
     "username": "johnny",
     "display_name": "Johnny Smith",
-    "avatar_url": null
-  }
+    "avatar_url": null,
+    "friend_status": "requested"
+  },
+  {
+    "user_id": 13,
+    "username": "Alexa",
+    "display_name": "Alexa Gates",
+    "avatar_url": null,
+    "friend_status": null
+  },
 ]
 ```
 
@@ -76,6 +85,7 @@ The body is an array. It is `[]` if nothing matches.
 | `username` | string | Username |
 | `display_name` | string | Display name |
 | `avatar_url` | string \| null | Avatar URL, null if not set. But always null now |
+| `friend_status` | string \| null | Whether the user in this response is friend of loggined-user. 3 values: `friend` if the sender of the request and the person in this response are friend, `requested` means loggined-user sent but hasn't been accepted,  `null` mean not friend |
 
 #### Error Responses
 

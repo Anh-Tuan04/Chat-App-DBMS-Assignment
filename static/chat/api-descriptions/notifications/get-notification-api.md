@@ -69,7 +69,7 @@ The body is an array, newest notification first. It is `[]` if there are no noti
   {
     "notification_id": "1789432156738291900",
     "notification_type": "friend_request",
-    "is_read": 0,
+    "is_read": false,
     "created_at": "2026-11-19T05:20:00Z",
     "payload": {
       "actor": {
@@ -83,7 +83,7 @@ The body is an array, newest notification first. It is `[]` if there are no noti
   {
     "notification_id": "1789432156738291850",
     "notification_type": "friend_accepted",
-    "is_read": 1,
+    "is_read": true,
     "created_at": "2026-11-18T10:02:00Z",
     "payload": {
       "actor": {
@@ -97,7 +97,7 @@ The body is an array, newest notification first. It is `[]` if there are no noti
   {
     "notification_id": "1789432156738291800",
     "notification_type": "group_added",
-    "is_read": 0,
+    "is_read": false,
     "created_at": "2026-11-17T08:30:00Z",
     "payload": {
       "actor": {
@@ -121,7 +121,7 @@ These fields are the same for every type.
 |-------|------|-------------|
 | `notification_id` | string | Notification ID. A 64-bit integer sent as a string so JavaScript does not lose precision. Use the last item's `notification_id` as `before` to load older notifications |
 | `notification_type` | string | What happened. Decides the shape of `payload`. See the table below |
-| `is_read` | integer | `0` if the user has not read this notification yet, `1` if the user has already read |
+| `is_read` | bool | `true` if the user has not read this notification yet, `false` if the user has already read |
 | `created_at` | string | Time the notification was created, ISO 8601 UTC |
 | `payload` | object | Details of the notification. Its fields depend on `notification_type` |
 

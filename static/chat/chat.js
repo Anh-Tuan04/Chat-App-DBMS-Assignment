@@ -1,5 +1,5 @@
 import { conversationList, createConversationItem } from './conversation.js';
-import { initializeUserSearch } from "./top-right-bar/add-friend.js";
+// import { initializeUserSearch } from "./top-right-bar/add-friend.js";
 import { renderFriends } from "./top-right-bar/friends.js"
 
 import * as UserProfile from "./top-right-bar/user-profile.js"
@@ -7,7 +7,7 @@ import * as UserProfile from "./top-right-bar/user-profile.js"
 
 const $ = function (id) { return document.getElementById(id); };
 
-initializeUserSearch();
+// initializeUserSearch();
 
 
 /* =====================================================
@@ -46,6 +46,7 @@ document.querySelector(".topbar-right").addEventListener('click', function (even
   if (!trigger) return;
   openModal(trigger.dataset.modalTarget);
 });
+
 
 // Backdrop, X button and Cancel button: anything with data-close
 document.addEventListener('click', function (event) {

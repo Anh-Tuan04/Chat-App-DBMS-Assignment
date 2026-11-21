@@ -24,12 +24,12 @@ def get_conversations():
             "display_name": "Jane Doe",
             "conversation_img_url": "",
             "latest_message": {
-            "message_id": "5f1c2a9e-8b7d-11ef-9c3a-0242ac120002",
-            "sender_id": 7,
-            "sender_display_name": "Jane Doe",
-            "message_type": "text",
-            "content": "See you tomorrow!",
-            "created_at": "2026-11-16T14:20:00Z"
+                "message_id": "5f1c2a9e-8b7d-11ef-9c3a-0242ac120002",
+                "sender_id": 7,
+                "sender_display_name": "Jane Doe",
+                "message_type": "text",
+                "content": "See you tomorrow!",
+                "created_at": "2026-11-16T14:20:00Z"
             },
             "unread_count": 3
         },

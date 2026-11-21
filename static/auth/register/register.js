@@ -80,15 +80,6 @@
     });
   }
 
-  // Show / hide password
-  if (passwordToggleBtn && passwordInput && passwordToggleIcon) {
-    passwordToggleBtn.addEventListener('click', function () {
-      const isHidden = passwordInput.getAttribute('type') === 'password';
-      passwordInput.setAttribute('type', isHidden ? 'text' : 'password');
-      passwordToggleIcon.textContent = isHidden ? 'visibility_off' : 'visibility';
-    });
-  }
-
   // Password strength meter
   function calculateStrengthScore(value) {
     let score = 0;
