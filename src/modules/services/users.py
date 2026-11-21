@@ -3,7 +3,9 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from modules.repositories.relationships import RelationshipRepository
 from modules.repositories.users import UserRepository
+from shared.repositories.mysql.relationships_repository import MySQLRelationshipRepository
 from shared.repositories.mysql.users_repository import MySQLUserRepository
 
 log = logging.getLogger(__name__)
@@ -12,8 +14,9 @@ log = logging.getLogger(__name__)
 class UserService:
     DEFAULT_SEARCH_LIMIT = 20
 
-    def __init__(self, users: UserRepository):
+    def __init__(self, users: UserRepository, relationships: RelationshipRepository | None = None):
         self._users = users
+        self._relationships = relationships
 
     def search(
         self, prefix: str, current_user_id: int | None = None
@@ -26,23 +29,34 @@ class UserService:
             summaries = self._users.search_by_username(
                 cleaned, limit=self.DEFAULT_SEARCH_LIMIT
             )
-            result = [
-                {
-                    "user_id": u.user_id,
-                    "username": u.username,
-                    "display_name": u.username,
-                    "avatar_url": u.avatar_url,
-                }
-                for u in summaries
-                if current_user_id is None or u.user_id != current_user_id
-            ]
+            result: list[dict[str, Any]] = []
+            for u in summaries:
+                if current_user_id is not None:
+                    if u.user_id == current_user_id:
+                        continue
+                    if (
+                        self._relationships is not None
+                        and self._relationships.is_blocked_either_way(
+                            current_user_id, u.user_id
+                        )
+                    ):
+                        continue
+
+                result.append(
+                    {
+                        "user_id": u.user_id,
+                        "username": u.username,
+                        "display_name": u.username,
+                        "avatar_url": u.avatar_url,
+                    }
+                )
             return result, None
         except Exception:
             log.exception("search users failed: prefix=%s", cleaned)
             return None, "Internal server error"
 
 
-_default_service = UserService(MySQLUserRepository())
+_default_service = UserService(MySQLUserRepository(), MySQLRelationshipRepository())
 
 
 def search_user_service(

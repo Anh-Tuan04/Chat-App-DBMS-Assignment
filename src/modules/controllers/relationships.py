@@ -1,9 +1,18 @@
 from flask import Blueprint, request, jsonify, session
 
+from modules.services.relationships import (
+    accept_friend_request_service,
+    block_user_service,
+    get_friend_request_service,
+    get_friends_service,
+    make_friend_request_service,
+    unblock_user_service,
+    unfriend_service,
+)
 from utils import error_response, login_required
 
 relationships_bp = Blueprint('relationships_bp', __name__, url_prefix='/api/relationships/')
-
+blocks_bp = Blueprint('blocks_bp', __name__, url_prefix='/api/blocks')
 
 @relationships_bp.route('/friends', methods=['GET', 'DELETE'])
 @login_required
@@ -14,27 +23,27 @@ def friends():
         user_id = session.get('user_id')
 
         # TODO: call service
-        # users, err = get_friends_service(user_id)
-        # if err:
-        #   return error_response("Internal server error", 500)
+        users, err = get_friends_service(user_id)
+        if err:
+          return error_response("Internal server error", 500)
         
         # hardcoded response
-        users = [
-            {
-                "friend_id": 7,
-                "friend_username": "jane_doe",
-                "friend_display_name": "Jane Doe",
-                "friend_avatar_url": "",
-                "friend_online_status": "online"
-            },
-            {
-                "friend_id": 21,
-                "friend_username": "mike99",
-                "friend_display_name": "Mike",
-                "friend_avatar_url": "",
-                "friend_online_status": "offline"
-            }
-        ]
+        # users = [
+        #     {
+        #         "friend_id": 7,
+        #         "friend_username": "jane_doe",
+        #         "friend_display_name": "Jane Doe",
+        #         "friend_avatar_url": "",
+        #         "friend_online_status": "online"
+        #     },
+        #     {
+        #         "friend_id": 21,
+        #         "friend_username": "mike99",
+        #         "friend_display_name": "Mike",
+        #         "friend_avatar_url": "",
+        #         "friend_online_status": "offline"
+        #     }
+        # ]
 
         return jsonify(users), 200
 
@@ -49,19 +58,20 @@ def friends():
         if friend_id == user_id:
             return error_response('Cannot unfriend yourself', 400)
         # TODO: call service
-        # err = unfriend_service(user_id, friend_id)
-        # if err:
-        #   match err:
-        #       case 'Friend not found':
-        #           return error_response(err, 404)
-        #       case _:
-        #           return error_response('Internal server error', 500)
+        err = unfriend_service(user_id, friend_id)
+        if err:
+          match err:
+              case 'Friend not found':
+                  return error_response(err, 404)
+              case _:
+                  return error_response('Internal server error', 500)
 
         # Will only get here if unfriend succeeds
         return jsonify(friend_id=friend_id), 200
 
 
 @relationships_bp.route('/friend-request', methods=['GET', 'POST'])
+@relationships_bp.route('/friend-requests', methods=['GET', 'POST'])
 @login_required
 def friend_request():
 
@@ -76,15 +86,15 @@ def friend_request():
         if friend_id == user_id:
             return error_response('Cannot send a friend request to yourself', 400)
         # TODO: call service
-        # err = make_friend_request_service(user_id, friend_id)
-        # if err:
-        #   match err:
-        #       case 'Friend not exist' | 'Blocked':
-        #           return error_response(err, 404)
-        #       case 'Already friend':
-        #           return error_response(err, 409)
-        #       case _:
-        #           return error_response('Internal server error', 500)
+        err = make_friend_request_service(user_id, friend_id)
+        if err:
+          match err:
+              case 'Friend not exist' | 'Blocked':
+                  return error_response(err, 404)
+              case 'Already friend':
+                  return error_response(err, 409)
+              case _:
+                  return error_response('Internal server error', 500)
 
         # Will only get to this point if a friend request is registered in DB
         return jsonify(receiver_id=friend_id), 200
@@ -95,29 +105,29 @@ def friend_request():
 
         # TODO: call service
         # requests are pending friend requests only, declined are not included
-        # requests, err = get_friend_request_service(user_id)
-        # if err:
-        #   return error_response('Internal server error', 500)
+        requests, err = get_friend_request_service(user_id)
+        if err:
+          return error_response('Internal server error', 500)
         
         # hardcoded response
-        requests = [
-            {
-                "request_id": 15,
-                "requester_id": 7,
-                "requester_username": "jane_doe",
-                "requester_display_name": "Jane Doe",
-                "requester_avatar_url": "",
-                "created_at": "2026-10-29T09:20:00Z"
-            },
-            {
-                "request_id": 12,
-                "requester_id": 21,
-                "requester_username": "mike99",
-                "requester_display_name": "Mike",
-                "requester_avatar_url": "",
-                "created_at": "2026-10-28T14:05:00Z"
-            }
-        ]
+        # requests = [
+        #     {
+        #         "request_id": 15,
+        #         "requester_id": 7,
+        #         "requester_username": "jane_doe",
+        #         "requester_display_name": "Jane Doe",
+        #         "requester_avatar_url": "",
+        #         "created_at": "2026-10-29T09:20:00Z"
+        #     },
+        #     {
+        #         "request_id": 12,
+        #         "requester_id": 21,
+        #         "requester_username": "mike99",
+        #         "requester_display_name": "Mike",
+        #         "requester_avatar_url": "",
+        #         "created_at": "2026-10-28T14:05:00Z"
+        #     }
+        # ]
 
         return jsonify(requests), 200
 
@@ -132,13 +142,47 @@ def accept_friend_request():
     user_id = session.get('user_id')
 
     # TODO: call service
-    # err = accept_friend_request_service(user_id, request_id)
-    # if err:
-    #   match err:
-    #       case 'No request with this id':
-    #           return error_response(err, 404)
-    #       case _:
-    #           return error_response('Internal server error', 500)
+    friend_id, err = accept_friend_request_service(user_id, request_id)
+    if err:
+      match err:
+          case 'No request with this id':
+              return error_response(err, 404)
+          case _:
+              return error_response('Internal server error', 500)
 
     # Will only get here if the request is accepted server side
-    return jsonify(friend_id=request_id), 200
+    return jsonify(friend_id=friend_id), 200
+
+@blocks_bp.route('', methods=['POST', 'DELETE'])
+@login_required
+def blocks():
+    target_id = request.args.get('user_id', 0, type=int)
+    if not target_id:
+        return error_response('user_id is required', 400)
+
+    user_id = session.get('user_id')
+    if target_id == user_id:
+        return error_response('Cannot block yourself', 400)
+
+    if request.method == 'POST':
+        err = block_user_service(user_id, target_id)
+        if err:
+            match err:
+                case 'User not found':
+                    return error_response(err, 404)
+                case 'User is already blocked':
+                    return error_response(err, 409)
+                case _:
+                    return error_response('Internal server error', 500)
+
+        return jsonify(blocked_id=target_id), 201
+
+    err = unblock_user_service(user_id, target_id)
+    if err:
+        match err:
+            case 'Block not found':
+                return error_response(err, 404)
+            case _:
+                return error_response('Internal server error', 500)
+
+    return jsonify(unblocked_id=target_id), 200
