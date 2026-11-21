@@ -19,17 +19,6 @@ CREATE TABLE IF NOT EXISTS messages_by_conversation (
 
 
 
--- THAY ĐỔI: thêm is_read (cột thường nên UPDATE tại chỗ được).
-CREATE TABLE IF NOT EXISTS notifications_by_user (
-    user_id BIGINT,
-    notification_id BIGINT,
-    notification_type TEXT,
-    related_id BIGINT,
-    is_read BOOLEAN,
-    created_at TIMESTAMP,
-    PRIMARY KEY (user_id, notification_id)
-) WITH CLUSTERING ORDER BY (notification_id DESC);
-
 -- THAY ĐỔI: chỉ còn là "danh sách hội thoại của user" (để load và để xoá hội thoại).
 -- Không còn cột nào bị cập nhật mỗi khi có tin nhắn.
 -- Xoá hội thoại phía mình = đặt cleared_until_message_id (giữ dòng); danh sách ẩn hội thoại

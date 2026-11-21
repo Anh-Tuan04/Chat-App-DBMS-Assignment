@@ -39,6 +39,22 @@ CREATE TABLE friend_requests (
     INDEX idx_requester (requester_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE notifications (
+    notification_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
+    notification_type VARCHAR(32) NOT NULL,
+    related_id BIGINT UNSIGNED,
+    is_read BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_notifications_user
+        FOREIGN KEY (user_id) REFERENCES users(user_id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+
+    INDEX idx_notifications_user_page (user_id, notification_id),
+    INDEX idx_notifications_user_unread (user_id, is_read)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE friendships (
     user_a BIGINT UNSIGNED NOT NULL,
     user_b BIGINT UNSIGNED NOT NULL,
