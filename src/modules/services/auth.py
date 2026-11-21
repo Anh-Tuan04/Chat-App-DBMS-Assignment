@@ -34,7 +34,8 @@ class AuthService:
         try:
             normalized_username = username.strip()
             normalized_display_name = display_name.strip()
-            password_hash = generate_password_hash(password)
+            # password_hash = generate_password_hash(password)
+            password_hash = password  # TODO: remove this line and uncomment the above line when ready to hash passwords
             user_id = self._auth_repo.create_user(
                 username=normalized_username,
                 display_name=normalized_display_name,
@@ -72,7 +73,8 @@ class AuthService:
         if credentials is None:
             return None, "username or password incorrect"
         try:
-            if not check_password_hash(credentials.password_hash, password):
+            # if not check_password_hash(credentials.password_hash, password):
+            if credentials.password_hash != password:  # TODO: remove this line and uncomment the above line when ready to hash passwords
                 return None, "username or password incorrect"
         except Exception:
             log.exception("verify password failed: username=%s", normalized_username)

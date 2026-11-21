@@ -1,9 +1,11 @@
 import { conversationList, createConversationItem } from './conversation.js';
 // import { initializeUserSearch } from "./top-right-bar/add-friend.js";
+import { realTimeSocket } from './real-time-socket.js';
 import { renderFriends } from "./top-right-bar/friends.js"
 
 import * as UserProfile from "./top-right-bar/user-profile.js"
 
+import { messageStreamElement } from "./chat-area/messages.js"
 
 const $ = function (id) { return document.getElementById(id); };
 
@@ -47,6 +49,8 @@ document.querySelector(".topbar-right").addEventListener('click', function (even
   openModal(trigger.dataset.modalTarget);
 });
 
+
+messageStreamElement.dataset.conversationId = 2;  // no conversation selected yet
 
 // Backdrop, X button and Cancel button: anything with data-close
 document.addEventListener('click', function (event) {

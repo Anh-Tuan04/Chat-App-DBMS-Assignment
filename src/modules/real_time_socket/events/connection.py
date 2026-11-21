@@ -10,4 +10,5 @@ def on_connect():
     if user_id is None:
         raise ConnectionRefusedError("unauthorized")
     join_room(f"user:{user_id}")       # personal room for notifications
+    print(f"User {user_id} connected. SID: {request.sid}")
     # optionally join each conversation room the user belongs to

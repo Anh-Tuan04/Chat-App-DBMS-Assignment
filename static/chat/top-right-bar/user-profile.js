@@ -1,3 +1,4 @@
+import { realTimeSocket } from "../real-time-socket.js";
 import { showToast } from "../toast.js"
 import { showError } from "../error.js"
 /* Avatar menu (top right): Profile, Settings, Log out. Load after chat.js. */
@@ -21,7 +22,7 @@ const userMenuItems = [
 const userMenuActions = {
   profile: function () { showToast('Profile selected'); },
   settings: function () { showToast('Settings selected'); },
-  logout: async function () { await logoutHandler(); }
+  logout: async function () { await logout(); }
 };
 
 
@@ -131,7 +132,7 @@ function setUserMenuOpen(isOpen) {
 
 
 // handlers for user profile
-async function logoutHandler() {
+async function logout() {
   // fetch logout, clear session
   try {
     const res = await fetch(`/api/auth/logout`, {
@@ -146,6 +147,7 @@ async function logoutHandler() {
     if (res.ok) {
       // Clear local storage
       localStorage.clear();
+      realTimeSocket.disconnect(); // Disconnect the socket before redirecting
       // Redirect to login page
       window.location.replace('/');
     } else {

@@ -67,7 +67,7 @@ function createNotificationElement({ id, type, message, timeAgo, acceptLabel}) {
     notificationList.appendChild(notifItem);
 }
 
-export async function fetchNotifications() {
+export async function getNotifications() {
     try {
 
     } catch (error) {

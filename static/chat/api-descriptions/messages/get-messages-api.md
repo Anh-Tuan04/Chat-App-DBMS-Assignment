@@ -66,7 +66,7 @@ The body is an array, newest message first. It is `[]` if there are no messages 
 ```json
 [
   {
-    "message_id": "1234578",
+    "message_id": "1234576",
     "sender_id": 7,
     "sender_display_name": "Jane Doe",
     "message_type": "text",

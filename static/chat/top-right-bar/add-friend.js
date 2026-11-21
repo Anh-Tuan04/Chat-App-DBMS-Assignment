@@ -136,7 +136,7 @@ const createUserRow = ({
 //     addFriendResults.append(...results.map(createUserRow));
 // }
 
-export async function fetchSearchUser(queryName) {
+export async function searchUser(queryName) {
     try {
         const response = await fetch(
             `/api/users/search?username=${encodeURIComponent(queryName)}`,

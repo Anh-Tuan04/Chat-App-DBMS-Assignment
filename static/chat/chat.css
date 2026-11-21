@@ -358,6 +358,13 @@ img { display: block; }
   text-overflow: ellipsis;
 }
 
+.conversation-item.has-unread .conversation-preview,
+.conversation-item.has-unread .conversation-name,
+.conversation-item.has-unread .conversation-time {
+  font-weight: 750;
+  color: var(--color-text);
+}
+
 /* ---------- Page content & topbar ---------- */
 .page-content { padding-left: var(--sidebar-width); }
 
@@ -567,6 +574,14 @@ img { display: block; }
   from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: none; }
 }
+
+/* ---------- Own messages (right side) ---------- */
+.message-own { flex-direction: row-reverse; }
+.message-own .message-body { text-align: right; }
+.message-own .message-header { justify-content: flex-end; }
+.message-own .code-block,
+.message-own .file-card,
+.message-own .image-card { margin-left: auto; text-align: left; }
 
 .message-avatar-wrap {
   position: relative;

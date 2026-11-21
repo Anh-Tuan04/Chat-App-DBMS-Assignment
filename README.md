@@ -56,6 +56,7 @@ TemplateFileStructure_branch/
 │   │       ├── events/
 │   │       │   ├── connection.py
 │   │       │   ├── messages.py
+│   │       │   ├── conversation.py
 │   │       │   └── notifications.py
 │   │       └── emitters/
 │   │           └── notifications.py

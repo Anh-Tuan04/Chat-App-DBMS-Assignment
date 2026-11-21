@@ -144,7 +144,7 @@ function createFriendRow({ id, initials, name, state, avatarUrl }) {
 
 
 // function fetch to server to get friends list (Not used)
-export async function fetchFriends() {
+export async function getFriends() {
     const res = await fetch('/api/friends');
     if (!res.ok) {
         showError('Failed to fetch friends list');
