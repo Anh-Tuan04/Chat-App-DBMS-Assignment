@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import logging
 from typing import Any
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -8,6 +9,9 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from ..repositories.auth import AuthRepository
 from shared.repositories.mysql.auth_repository import MySQLAuthRepository
 from shared.repositories.mysql.users_table import AlreadyExists, UsersTable
+
+log = logging.getLogger(__name__)
+
 
 class AuthService:
     def __init__(
@@ -24,11 +28,13 @@ class AuthService:
         password: str,
         display_name: str,
     ) -> tuple[dict[str, Any] | None, str | None]:
-        normalized_username = username.strip()
-        normalized_display_name = display_name.strip()
-        password_hash = generate_password_hash(password)
+        if not all(isinstance(value, str) for value in (username, password, display_name)):
+            return None, "Invalid input"
 
         try:
+            normalized_username = username.strip()
+            normalized_display_name = display_name.strip()
+            password_hash = generate_password_hash(password)
             user_id = self._auth_repo.create_user(
                 username=normalized_username,
                 display_name=normalized_display_name,
@@ -37,6 +43,7 @@ class AuthService:
         except AlreadyExists:
             return None, "Username already in use"
         except Exception:
+            log.exception("register failed: username=%s", normalized_username)
             return None, "Internal server error"
 
         created_at = datetime.datetime.now().replace(microsecond=0).isoformat()
@@ -52,15 +59,24 @@ class AuthService:
         username: str,
         password: str,
     ) -> tuple[dict[str, Any] | None, str | None]:
+        if not isinstance(username, str) or not isinstance(password, str):
+            return None, "Invalid input"
         normalized_username = username.strip()
 
         try:
             credentials = self._auth_repo.get_credentials_by_username(normalized_username)
         except Exception:
+            log.exception("login failed: username=%s", normalized_username)
             return None, "Internal server error"
 
-        if credentials is None or not check_password_hash(credentials.password_hash, password):
+        if credentials is None:
             return None, "username or password incorrect"
+        try:
+            if not check_password_hash(credentials.password_hash, password):
+                return None, "username or password incorrect"
+        except Exception:
+            log.exception("verify password failed: username=%s", normalized_username)
+            return None, "Internal server error"
 
         display_name = credentials.username
         avatar_url = ""
@@ -72,7 +88,8 @@ class AuthService:
                     display_name = profile.get("display_name") or display_name
                     avatar_url = profile.get("avatar_url") or ""
             except Exception:
-                pass
+                log.exception("load user profile failed: user=%s", credentials.user_id)
+                return None, "Internal server error"
 
         return {
             "user_id": credentials.user_id,
@@ -81,8 +98,8 @@ class AuthService:
             "avatar_url": avatar_url,
         }, None
 
-    def logout(self, user_id: int | None) -> str | None:
-        return None
+    def logout(self, user_id: int | None) -> tuple[None, str | None]:
+        return None, None
 
 
 # --- Instance & wrapper functions để controllers/auth.py gọi trực tiếp ---
@@ -105,5 +122,5 @@ def login_service(
     return _auth_service.login(username, password)
 
 
-def logout_service(user_id: int | None) -> str | None:
+def logout_service(user_id: int | None) -> tuple[None, str | None]:
     return _auth_service.logout(user_id)
