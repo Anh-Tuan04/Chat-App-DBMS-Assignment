@@ -1,0 +1,56 @@
+services:
+  mysql:
+    image: mysql:latest
+    command:
+      - '--skip-log-bin'
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: yes
+      MYSQL_DATABASE: chatapp
+    ports:
+      - 3306:3306
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./src/shared/repositories/mysql/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    networks:
+      - public
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      timeout: 2s
+      retries: 5
+
+  cassandra:
+    image: cassandra:latest
+    container_name: my-cassandra
+    ports:
+      - 9042:9042
+    volumes:
+      - cassandra-data:/var/lib/cassandra
+    networks:
+      - public
+    healthcheck:
+      test: [ "CMD-SHELL", "cqlsh -e 'describe keyspaces' || exit 1" ]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+      start_period: 30s
+
+  cassandra-init:
+    image: cassandra:latest
+    depends_on:
+      cassandra:
+        condition: service_healthy
+    volumes:
+      - ./src/shared/repositories/cassandra/schema.cql:/schema.cql:ro
+    networks:
+      - public
+    command: [ "cqlsh", "cassandra", "-f", "/schema.cql" ]
+    restart: "no"
+
+
+networks:
+  public:
+
+
+volumes:
+  mysql-data:
+  cassandra-data:
