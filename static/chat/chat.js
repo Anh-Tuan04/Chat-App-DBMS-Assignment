@@ -1,7 +1,8 @@
-import { conversationList, createConversationItem } from './conversation.js';
+import { getConversations } from './conversation.js';
 // import { initializeUserSearch } from "./top-right-bar/add-friend.js";
 import { realTimeSocket } from './real-time-socket.js';
 import { renderFriends } from "./top-right-bar/friends.js"
+import { initializeCreateGroup } from "./top-right-bar/create-group.js"
 
 import * as UserProfile from "./top-right-bar/user-profile.js"
 
@@ -19,7 +20,8 @@ const $ = function (id) { return document.getElementById(id); };
 // What each dialog shows when it opens. Each feature script adds its own entry:
 // modalPreparers['id-of-modal'] = function () { ... };
 const modalPreparers = {
-  "friends-modal": renderFriends
+  "friends-modal": renderFriends,
+  "create-group-modal": initializeCreateGroup
 };
 
 let lastFocused = null;
@@ -43,7 +45,7 @@ function closeModal(modal) {
 }
 
 // Top bar buttons: <button data-modal-target="id-of-modal">
-document.querySelector(".topbar-right").addEventListener('click', function (event) {
+document.addEventListener('click', function (event) {
   const trigger = event.target.closest('[data-modal-target]');
   if (!trigger) return;
   openModal(trigger.dataset.modalTarget);
@@ -51,6 +53,7 @@ document.querySelector(".topbar-right").addEventListener('click', function (even
 
 
 messageStreamElement.dataset.conversationId = 2;  // no conversation selected yet
+getConversations();
 
 // Backdrop, X button and Cancel button: anything with data-close
 document.addEventListener('click', function (event) {

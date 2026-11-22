@@ -238,11 +238,22 @@
             id="group-name-input"
             type="text"
             placeholder="e.g. design-systems"
-            maxlength="40"
+            maxlength="100"
             autocomplete="off"
           />
 
-          <span class="modal-label">Add members</span>
+          <label class="modal-label" for="group-member-search">Add members</label>
+          <div class="modal-search">
+            <span class="material-symbols-outlined">search</span>
+            <input
+              id="group-member-search"
+              type="text"
+              placeholder="Search users by username"
+              autocomplete="off"
+            />
+          </div>
+          <span class="modal-label">Selected members <span id="group-member-count">0</span>/99</span>
+          <div class="modal-results selected-member-list" id="selected-group-members"></div>
           <div class="modal-results member-list" id="group-members"></div>
         </div>
         <div class="modal-footer">

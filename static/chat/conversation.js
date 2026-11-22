@@ -171,9 +171,20 @@ function renderConversations(conversations) {
         showError('Invalid conversations data: expected an array.');
         return;
     }
-    // Not too worried about validate response data here
+
+    const activeConversationId = conversationList
+        .querySelector('.conversation-item.is-active')?.dataset.conversationId;
     const formatConversationTime = (iso) =>
         iso ? new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+
+    conversationList.replaceChildren();
+    if (conversations.length === 0) {
+        const emptyState = document.createElement('p');
+        emptyState.classList.add('conversation-empty');
+        emptyState.textContent = 'No conversations yet.';
+        conversationList.appendChild(emptyState);
+        return;
+    }
 
     conversations.forEach(conversation => {
         const conversationItem = createConversationItem({
@@ -181,13 +192,18 @@ function renderConversations(conversations) {
             avatarUrl: conversation.conversation_img_url,
             initials: initials(conversation.display_name),
             isGroup: conversation.conversation_type === 'group',
-            status: conversation.status,
-            unreadCount: conversation.unread_count,
+            unreadCount: Number(conversation.unread_count) || 0,
             name: conversation.display_name,
             time: formatConversationTime(conversation.latest_message?.created_at),
-            preview: conversation.latest_message?.content
+            preview: conversation.latest_message?.content ||
+                (conversation.conversation_type === 'group' ? 'Group conversation' : 'No messages yet')
         });
-        if (conversationItem) conversationList.appendChild(conversationItem);
+        if (conversationItem) {
+            if (conversationItem.dataset.conversationId === activeConversationId) {
+                conversationItem.classList.add('is-active');
+            }
+            conversationList.appendChild(conversationItem);
+        }
     });
 }
 
@@ -222,10 +238,16 @@ export async function getConversations() {
                 credentials: 'include'
             }
         );
-        const conversations = await response.json();
-        // renderConversations(conversations);
+        const body = await response.json();
+        if (!response.ok) {
+            showError(body?.message || 'Failed to fetch conversations');
+            return false;
+        }
+        renderConversations(body);
+        return true;
     } catch (error) {
         showError('Failed to fetch conversations');
+        return false;
     }
 }
 
