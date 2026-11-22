@@ -21,20 +21,4 @@ def search_user():
     if err or users is None:
         return error_response('Internal server error', 500)
 
-    # hardcoded response
-    # users = [
-    #     {
-    #         "user_id": 7,
-    #         "username": "john_doe",
-    #         "display_name": "John Doe",
-    #         "avatar_url": ""
-    #     },
-    #     {
-    #         "user_id": 12,
-    #         "username": "johnny",
-    #         "display_name": "Johnny Smith",
-    #         "avatar_url": ""
-    #     }
-    # ]
-
     return jsonify(users), 200

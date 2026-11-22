@@ -1,4 +1,4 @@
-create database chatapp;
+create database if not exists chatapp;
 USE chatapp;
 
 CREATE TABLE users (
