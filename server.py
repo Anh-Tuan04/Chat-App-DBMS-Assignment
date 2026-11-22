@@ -13,24 +13,24 @@ SRC_DIR = BASE_DIR / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from utils import SkippableSessionInterface, error_response
+from src.utils import SkippableSessionInterface, error_response
 STATIC_DIR = BASE_DIR / "static"
 TEMPLATE_DIR = BASE_DIR / "templates"
 # templates/ is supposed to stored jinja templates,
 # but it is currently used for plain html
 
 # Imports from controllers
-from modules.controllers.auth import auth_bp
-from modules.controllers.conversations import conversations_bp
-from modules.controllers.messages import messages_bp
-# from app.modules.controllers.notifications import notifications_bp
-from modules.controllers.relationships import relationships_bp
-from modules.controllers.users import users_bp
-from users.routes import users_routes_bp
+from src.modules.controllers.auth import auth_bp
+from src.modules.controllers.conversations import conversations_bp
+from src.modules.controllers.messages import messages_bp
+from src.modules.controllers.notifications import notifications_bp
+from src.modules.controllers.relationships import relationships_bp
+from src.modules.controllers.users import users_bp
+from src.users.routes import users_routes_bp
 
-from modules.real_time_socket import init_socketio
-from modules.real_time_socket.extensions import socketio
-from modules.services.container import init_app_services
+from src.modules.real_time_socket import init_socketio
+from src.modules.real_time_socket.extensions import socketio
+from src.modules.services.container import init_app_services
 
 
 def create_app(config: dict | None = None) -> Flask:
@@ -71,7 +71,7 @@ def create_app(config: dict | None = None) -> Flask:
     app.register_blueprint(auth_bp)
     app.register_blueprint(conversations_bp)
     app.register_blueprint(messages_bp)
-    # app.register_blueprint(notifications_bp)
+    app.register_blueprint(notifications_bp)
     app.register_blueprint(relationships_bp)
     app.register_blueprint(users_bp)
     app.register_blueprint(users_routes_bp)
