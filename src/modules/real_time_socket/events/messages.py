@@ -99,7 +99,7 @@ def on_message(data):
             socketio.emit('receive_message', outgoing, room=f"user:{member['user_id']}")
     else:
         return _error(f'Unknown conversation type: {conversation.type}')
-    print(f"User {user_id} sent to user \"{receiver_id}\" message {text}" if conversation.type == 'direct' else f"User {user_id} sent to group {conversation_id} message \"{text}\"")
+    print(f"User {user_id} sent to user {receiver_id} message \"{text}\"" if conversation.type == 'direct' else f"User {user_id} sent to group {conversation_id} message \"{text}\"")
 
     return {
         'status': 'success',
