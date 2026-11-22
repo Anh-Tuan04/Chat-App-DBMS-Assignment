@@ -2,11 +2,13 @@ import os
 import sys
 from pathlib import Path
 
-from flask import Flask, request
+from flask import Flask
 from flask_cors import CORS
+from dotenv import load_dotenv
 from werkzeug.exceptions import HTTPException
 
 BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR / ".env")
 SRC_DIR = BASE_DIR / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
@@ -28,9 +30,10 @@ from users.routes import users_routes_bp
 
 from modules.real_time_socket import init_socketio
 from modules.real_time_socket.extensions import socketio
+from modules.services.container import init_app_services
 
 
-def create_app() -> Flask:
+def create_app(config: dict | None = None) -> Flask:
     app = Flask(
         __name__,
         static_folder=str(STATIC_DIR),
@@ -53,8 +56,11 @@ def create_app() -> Flask:
     app.config["SECRET_KEY"] = os.urandom(32) 
     app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+    if config:
+        app.config.update(config)
 
     app.session_interface = SkippableSessionInterface()
+    init_app_services(app)
 
     # Force flask's abort to also not set cookie
     @app.errorhandler(HTTPException)
@@ -71,16 +77,15 @@ def create_app() -> Flask:
     app.register_blueprint(users_routes_bp)
 
     init_socketio(app)
+    CORS(
+        app,
+        resources={r"/api/*": {"origins": "http://localhost:5000"}},
+        supports_credentials=True,
+    )
     return app
 
 
 app = create_app()
-
-CORS(
-    app,
-    resources={r"/api/*": {"origins": "http://localhost:5000"}},
-    supports_credentials=True,
-)
 
 
 if __name__ == "__main__":

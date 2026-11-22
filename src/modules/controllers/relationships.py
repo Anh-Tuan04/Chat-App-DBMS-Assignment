@@ -1,14 +1,6 @@
 from flask import Blueprint, request, jsonify, session
 
-from modules.services.relationships import (
-    accept_friend_request_service,
-    block_user_service,
-    get_friend_request_service,
-    get_friends_service,
-    make_friend_request_service,
-    unblock_user_service,
-    unfriend_service,
-)
+from modules.services.container import get_services
 from utils import error_response, login_required
 
 relationships_bp = Blueprint('relationships_bp', __name__, url_prefix='/api/relationships/')
@@ -23,7 +15,7 @@ def friends():
         user_id = session.get('user_id')
 
         # TODO: call service
-        users, err = get_friends_service(user_id)
+        users, err = get_services().relationships.get_friends(user_id)
         if err:
           return error_response("Internal server error", 500)
         
@@ -58,7 +50,7 @@ def friends():
         if friend_id == user_id:
             return error_response('Cannot unfriend yourself', 400)
         # TODO: call service
-        err = unfriend_service(user_id, friend_id)
+        err = get_services().relationships.unfriend(user_id, friend_id)
         if err:
           match err:
               case 'Friend not found':
@@ -86,7 +78,7 @@ def friend_request():
         if friend_id == user_id:
             return error_response('Cannot send a friend request to yourself', 400)
         # TODO: call service
-        err = make_friend_request_service(user_id, friend_id)
+        err = get_services().relationships.make_friend_request(user_id, friend_id)
         if err:
           match err:
               case 'Friend not exist' | 'Blocked':
@@ -105,7 +97,7 @@ def friend_request():
 
         # TODO: call service
         # requests are pending friend requests only, declined are not included
-        requests, err = get_friend_request_service(user_id)
+        requests, err = get_services().relationships.get_friend_requests(user_id)
         if err:
           return error_response('Internal server error', 500)
         
@@ -142,7 +134,7 @@ def accept_friend_request():
     user_id = session.get('user_id')
 
     # TODO: call service
-    friend_id, err = accept_friend_request_service(user_id, request_id)
+    friend_id, err = get_services().relationships.accept_friend_request(user_id, request_id)
     if err:
       match err:
           case 'No request with this id':
@@ -165,7 +157,7 @@ def blocks():
         return error_response('Cannot block yourself', 400)
 
     if request.method == 'POST':
-        err = block_user_service(user_id, target_id)
+        err = get_services().relationships.block_user(user_id, target_id)
         if err:
             match err:
                 case 'User not found':
@@ -177,7 +169,7 @@ def blocks():
 
         return jsonify(blocked_id=target_id), 201
 
-    err = unblock_user_service(user_id, target_id)
+    err = get_services().relationships.unblock_user(user_id, target_id)
     if err:
         match err:
             case 'Block not found':

@@ -89,11 +89,11 @@ The array is sorted by most recent activity: conversations are ordered by `lates
  
 **`latest_message` fields**
  
-Present only when `latest_message` is not `null`. (not implement now. So always null)
+Present only when `latest_message` is not `null`.
  
 | Field | Type | Description |
 |-------|------|-------------|
-| `message_id` | string | Message ID (Cassandra time-based UUID) |
+| `message_id` | string | Message ID, serialized as a string |
 | `sender_id` | integer | ID of the user who sent the message. Compare with the logged-in user to show "You: ..." |
 | `sender_display_name` | string | Display name of the sender. Useful for group previews such as "Jane: See you tomorrow!" |
 | `message_type` | string | Always `text` for now. Reserved for future types such as `image` or `file` |

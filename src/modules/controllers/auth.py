@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, session
 
-from ..services.auth import login_service, logout_service, register_service
+from ..services.container import get_services
 from utils import error_response, login_required
 
 auth_bp = Blueprint('auth_bp', __name__, url_prefix='/api/auth/')
@@ -42,7 +42,7 @@ def register():
         return error_response('Password too long', 400)
 
     # TODO: implement register service call
-    user, err = register_service(username, password, display_name)
+    user, err = get_services().auth.register(username, password, display_name)
     if err:
         match err:
             case "Username already in use":
@@ -81,7 +81,7 @@ def login():
     # TODO: sanitize, type check, constraint enforce
 
     # TODO: call auth service
-    user, err = login_service(username, password)
+    user, err = get_services().auth.login(username, password)
     if err or user is None:
         match err:
             case "username or password incorrect": # This case should cover user is None
@@ -107,7 +107,7 @@ def logout():
     user_id = session.get("user_id")
 
     # TODO: call service
-    _, err = logout_service(user_id)
+    _, err = get_services().auth.logout(user_id)
     if err:
         return error_response("Internal server error", 500)
 

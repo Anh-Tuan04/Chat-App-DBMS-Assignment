@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, session
 
-from modules.services.users import search_user_service
+from modules.services.container import get_services
 from utils import error_response, login_required
 
 users_bp = Blueprint('users_bp', __name__, url_prefix='/api/users')
@@ -15,7 +15,7 @@ def search_user():
     if len(search_name) > 50:
         return error_response('Keyword longer than allowed', 400)
 
-    users, err = search_user_service(
+    users, err = get_services().users.search(
         search_name, current_user_id=session.get('user_id')
     )
     if err or users is None:

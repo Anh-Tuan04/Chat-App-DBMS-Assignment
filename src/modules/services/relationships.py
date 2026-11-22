@@ -5,8 +5,6 @@ from typing import Any
 
 from modules.repositories.relationships import RelationshipRepository
 from modules.repositories.users import UserRepository
-from shared.repositories.mysql.relationships_repository import MySQLRelationshipRepository
-from shared.repositories.mysql.users_repository import MySQLUserRepository
 
 log = logging.getLogger(__name__)
 
@@ -172,37 +170,3 @@ class RelationshipService:
         except Exception:
             log.exception("unblock_user failed: user=%s target=%s", user_id, target_id)
             return "Internal server error"
-
-
-_default_service = RelationshipService(
-    MySQLRelationshipRepository(),
-    MySQLUserRepository(),
-)
-
-
-def get_friends_service(user_id: int) -> tuple[list[dict[str, Any]] | None, str | None]:
-    return _default_service.get_friends(user_id)
-
-
-def unfriend_service(user_id: int, friend_id: int) -> str | None:
-    return _default_service.unfriend(user_id, friend_id)
-
-
-def make_friend_request_service(user_id: int, friend_id: int) -> str | None:
-    return _default_service.make_friend_request(user_id, friend_id)
-
-
-def get_friend_request_service(user_id: int) -> tuple[list[dict[str, Any]] | None, str | None]:
-    return _default_service.get_friend_requests(user_id)
-
-
-def accept_friend_request_service(user_id: int, request_id: int) -> tuple[int | None, str | None]:
-    return _default_service.accept_friend_request(user_id, request_id)
-
-
-def block_user_service(user_id: int, target_id: int) -> str | None:
-    return _default_service.block_user(user_id, target_id)
-
-
-def unblock_user_service(user_id: int, target_id: int) -> str | None:
-    return _default_service.unblock_user(user_id, target_id)

@@ -5,8 +5,6 @@ from typing import Any
 
 from modules.repositories.relationships import RelationshipRepository
 from modules.repositories.users import UserRepository
-from shared.repositories.mysql.relationships_repository import MySQLRelationshipRepository
-from shared.repositories.mysql.users_repository import MySQLUserRepository
 
 log = logging.getLogger(__name__)
 
@@ -54,12 +52,3 @@ class UserService:
         except Exception:
             log.exception("search users failed: prefix=%s", cleaned)
             return None, "Internal server error"
-
-
-_default_service = UserService(MySQLUserRepository(), MySQLRelationshipRepository())
-
-
-def search_user_service(
-    search_name: str, current_user_id: int | None = None
-) -> tuple[list[dict[str, Any]] | None, str | None]:
-    return _default_service.search(search_name, current_user_id=current_user_id)

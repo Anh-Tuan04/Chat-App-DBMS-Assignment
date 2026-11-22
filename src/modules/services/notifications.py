@@ -8,18 +8,13 @@ from modules.repositories.notifications import (
     NotificationRepository,
     NotificationType,
 )
-from shared.repositories.mysql.notifications_repository import (
-    MySQLNotificationRepository,
-)
 
 log = logging.getLogger(__name__)
 
 
 class NotificationService:
-    def __init__(self, notifications: NotificationRepository | None = None):
-        self._notifications = (
-            notifications if notifications is not None else MySQLNotificationRepository()
-        )
+    def __init__(self, notifications: NotificationRepository):
+        self._notifications = notifications
 
     def notify_friend_request(
         self, target_user_id: int, request_id: int
