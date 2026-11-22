@@ -29,23 +29,30 @@ class UserService:
             )
             result: list[dict[str, Any]] = []
             for u in summaries:
+                friend_status = None
                 if current_user_id is not None:
                     if u.user_id == current_user_id:
                         continue
-                    if (
-                        self._relationships is not None
-                        and self._relationships.is_blocked_either_way(
+                    if self._relationships is not None:
+                        if self._relationships.is_blocked_either_way(
                             current_user_id, u.user_id
-                        )
-                    ):
-                        continue
+                        ):
+                            continue
+                        if self._relationships.are_friends(current_user_id, u.user_id):
+                            friend_status = "friend"
+                        elif self._relationships.find_pending_request(
+                            requester_id=current_user_id,
+                            addressee_id=u.user_id,
+                        ) is not None:
+                            friend_status = "requested"
 
                 result.append(
                     {
                         "user_id": u.user_id,
                         "username": u.username,
-                        "display_name": u.username,
+                        "display_name": u.display_name or u.username,
                         "avatar_url": u.avatar_url,
+                        "friend_status": friend_status,
                     }
                 )
             return result, None
