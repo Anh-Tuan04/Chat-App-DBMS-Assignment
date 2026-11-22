@@ -2,10 +2,15 @@ import os
 import sys
 from pathlib import Path
 
-from flask import Flask
+from flask import Flask, request
 from flask_cors import CORS
 from dotenv import load_dotenv
 from werkzeug.exceptions import HTTPException
+
+import logging
+
+logging.getLogger("werkzeug").disabled = True
+logging.getLogger("werkzeug").propagate = False
 
 BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")
@@ -40,17 +45,18 @@ def create_app(config: dict | None = None) -> Flask:
         static_url_path='/static',
         # template_folder=str(TEMPLATES_DIR)
     )
-    # @app.before_request
-    # def print_request():
-    #     print(f"Request: {request.method} {request.path}", flush=True)
+    @app.before_request
+    def print_request():
+        print(f"Request: {request.method} {request.path}", flush=True)
 
-    # @app.after_request
-    # def print_response(response):
-    #     print(
-    #         f"Response: {request.method} {request.path} -> {response.status_code}",
-    #         flush=True,
-    #     )
-    #     return response
+
+    @app.after_request
+    def print_response(response):
+        print(
+            f"Response: {request.method} {request.path} -> {response.status_code}",
+            flush=True,
+        )
+        return response
 
     # new key every startup to force new login, unreliable
     app.config["SECRET_KEY"] = os.urandom(32) 

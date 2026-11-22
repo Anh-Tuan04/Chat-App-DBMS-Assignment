@@ -1,8 +1,16 @@
+from datetime import datetime, timezone
+
 from flask import Blueprint, request, jsonify, session
 
 from utils import error_response, login_required
-
+from modules.services.container import get_services
 messages_bp = Blueprint('messages_bp', __name__, url_prefix='/api/messages')
+
+
+def _format_utc_iso(value: datetime) -> str:
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
 @messages_bp.route('/', methods=['GET'])
@@ -14,52 +22,44 @@ def get_messages():
 
     user_id = session.get('user_id')
 
-    before = request.args.get('before', '', type=str)
-    if before:
-        limit = request.args.get('limit', 0, type=int)
-        if limit:
-            if not isinstance(limit, int):
-                return error_response('limit invalid', 400)
-            if limit < 1 or limit > 100:
-                return error_response('limit must be between 1 and 100', 400)
-        else: # empty limit, default 30
-            limit = 30
+    # limit: default 30, 1..100
+    limit = request.args.get('limit', 0, type=int) or 30
+    if limit < 1 or limit > 100:
+        return error_response('limit must be between 1 and 100', 400)
 
-        # TODO: call service
-        # messages, err = get_messages_service(user_id, conversation_id, before=before, limit=limit)
-    
-    else: # no before set, default newest messages
-        # TODO: call service
-        # messages, err = get_messags_service(user_id, conversation_id)
-        pass
+    # before: id of the oldest message already on screen (the service wants an int)
+    before_raw = request.args.get('before', '', type=str)
+    before_id = None
+    if before_raw:
+        try:
+            before_id = int(before_raw)
+        except ValueError:
+            return error_response('Before not valid', 400)
 
-    # if err:
-    #   match err:
-    #       case 'Conversation not found':
-    #           return error_response(err, 404)
-    #       case 'Before not valid' | 'Before not found':
-    #           return error_response(err, 400)
-    #       case _:
-    #           return error_response('Internal server error', 500)
+    page, err = get_services().messages.list_messages(user_id, conversation_id, limit, before_id)
 
-    # hardcoded response
-    messages = [
+    if err or page is None:
+        match err:
+            case 'Conversation not found':
+                return error_response(err, 404)
+            case 'Not a member of this conversation':
+                return error_response(err, 403)
+            case 'Before not valid' | 'Before not found':
+                return error_response(err, 400)
+            case _:
+                return error_response('Internal server error', 500)
+
+    # The service returns a MessagePage (items + next_cursor); the API returns a plain array,
+    # newest first, with the sender's display name added.
+    names = get_services().users.get_display_names({m.sender_id for m in page.items})
+    return jsonify([
         {
-            "message_id": "5f1c2a9e-8b7d-11ef-9c3a-0242ac120002",
-            "sender_id": 7,
-            "sender_display_name": "Jane Doe",
+            "message_id": str(m.message_id),
+            "sender_id": m.sender_id,
+            "sender_display_name": names.get(m.sender_id) or str(m.sender_id),
             "message_type": "text",
-            "content": "See you tomorrow!",
-            "created_at": "2026-11-16T14:20:00Z"
-        },
-        {
-            "message_id": "4e0b19d8-8b7d-11ef-8a2b-0242ac120002",
-            "sender_id": 1,
-            "sender_display_name": "John Doe",
-            "message_type": "text",
-            "content": "Sounds good, what time?",
-            "created_at": "2026-11-16T14:18:00Z"
+            "content": m.content,
+            "created_at": _format_utc_iso(m.created_at),
         }
-    ]
-
-    return jsonify(messages), 200
+        for m in page.items
+    ]), 200

@@ -54,6 +54,7 @@
       <!-- Top bar -->
       <header class="topbar">
         <div class="topbar-left">
+          <!-- data-receiver-id ???? -->
           <span class="server-name" id="conversation-name">Servername</span>
           <div class="topbar-divider"></div>
         </div>
@@ -242,7 +243,9 @@
             autocomplete="off"
           />
 
-          <label class="modal-label" for="group-member-search">Add members</label>
+          <label class="modal-label" for="group-member-search"
+            >Add members</label
+          >
           <div class="modal-search">
             <span class="material-symbols-outlined">search</span>
             <input
@@ -252,8 +255,13 @@
               autocomplete="off"
             />
           </div>
-          <span class="modal-label">Selected members <span id="group-member-count">0</span>/99</span>
-          <div class="modal-results selected-member-list" id="selected-group-members"></div>
+          <span class="modal-label"
+            >Selected members <span id="group-member-count">0</span>/99</span
+          >
+          <div
+            class="modal-results selected-member-list"
+            id="selected-group-members"
+          ></div>
           <div class="modal-results member-list" id="group-members"></div>
         </div>
         <div class="modal-footer">

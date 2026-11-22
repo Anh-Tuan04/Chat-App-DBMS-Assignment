@@ -16,6 +16,20 @@ class UserService:
         self._users = users
         self._relationships = relationships
 
+    def get_display_names(self, user_ids) -> dict[int, str]:
+        """Map user_id -> display name (falls back to username). Missing users are absent."""
+        ids = {int(user_id) for user_id in user_ids}
+        if not ids:
+            return {}
+        try:
+            return {
+                user_id: (user.display_name or user.username)
+                for user_id, user in self._users.get_many(ids).items()
+            }
+        except Exception:
+            log.exception("get display names failed: ids=%s", ids)
+            return {}
+
     def search(
         self, prefix: str, current_user_id: int | None = None
     ) -> tuple[list[dict[str, Any]] | None, str | None]:

@@ -152,8 +152,8 @@ export async function searchUser(queryName) {
             return [];
         }
         return data;
-    } catch {
-        showError('An error occurred while searching users');
+    } catch (error) {
+        showError(error?.message || 'An error occurred while searching users');
         return [];
     }
 }

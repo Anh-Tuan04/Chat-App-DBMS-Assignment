@@ -1,8 +1,10 @@
 # Conversations API
 
-## Create Conversation
+## Create a Direct Conversation
 
-Start a new direct conversation between the logged-in user and another user. A conversation can only be created together with its first message, so the message must not be empty. The sender is identified by the session cookie, and the other user is identified by `user_id` in the query string.
+Create a new direct conversation between the logged-in user and another user.
+The first message is created in the same request and cannot be empty.
+The logged-in user is identified by the Flask session cookie.
 
 ### Endpoint
 
@@ -10,47 +12,31 @@ Start a new direct conversation between the logged-in user and another user. A c
 |--------|-----|
 | `POST` | `{BASE_URL}/api/conversations/new-conversation?user_id={user_id}` |
 
-Example base URL: `http://localhost:5000`
+Example base URL: `http://127.0.0.1:5000`
 
-### Path Params
+### Query Parameters
 
-None.
+| Parameter | Type | Required | Constraints | Description |
+|-----------|------|----------|-------------|-------------|
+| `user_id` | integer | Yes | Must identify an existing user other than the logged-in user | User to start the conversation with |
 
-### Query Params
+Example:
 
-| Param | Type | Required | Constraints | Description |
-|-------|------|----------|-------------|-------------|
-| `user_id` | integer | Yes | Existing user, not the logged-in user | ID of the user to start the conversation with |
-
-**Example**
-
-```
+```http
 POST /api/conversations/new-conversation?user_id=7
 ```
 
 ### Request
 
-**Headers**
+#### Headers
 
 | Header | Value | Required | Description |
 |--------|-------|----------|-------------|
-| `Content-Type` | `application/json` | Yes | Body format |
-| `Cookie` | `user_id=<user_id>` | Yes | Session started by Login. Sent automatically by the browser. With `fetch`, use `credentials: "include"` for cross-origin calls |
-| `Accept` | `application/json` | No | Response format |
+| `Content-Type` | `application/json` | Yes | Request body format |
+| `Accept` | `application/json` | No | Expected response format |
+| Cookie | Flask session cookie | Yes | Created by login; use `credentials: "include"` with `fetch` when needed |
 
-**Body**
-
-```json
-{
-  "message": "string"
-}
-```
-
-| Field | Type | Required | Constraints | Description |
-|-------|------|----------|-------------|-------------|
-| `message` | string | Yes | 1–2000 chars, not empty and not only whitespace | First message of the conversation |
-
-**Example**
+#### Body
 
 ```json
 {
@@ -58,17 +44,34 @@ POST /api/conversations/new-conversation?user_id=7
 }
 ```
 
-### Response
+| Field | Type | Required | Constraints | Description |
+|-------|------|----------|-------------|-------------|
+| `message` | string | Yes | 1–2000 characters; not empty or whitespace-only | First message in the conversation |
 
-**Headers**
+JavaScript example:
 
-| Header | Value |
-|--------|-------|
-| `Content-Type` | `application/json` |
+```javascript
+const response = await fetch(
+  "/api/conversations/new-conversation?user_id=7",
+  {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    },
+    body: JSON.stringify({ message: "Hi Jane, how are you?" })
+  }
+);
 
-#### 201 Created — Conversation created
+const data = await response.json();
+```
 
-The body has the same fields as one element of the Get Conversation List response, so the client can add it straight into its conversation list.
+### Successful Response
+
+#### `201 Created`
+
+The conversation and its first message were created successfully.
 
 ```json
 {
@@ -76,46 +79,53 @@ The body has the same fields as one element of the Get Conversation List respons
   "conversation_type": "direct",
   "receiver_id": 7,
   "receiver_display_name": "Jane Doe",
-  "conversation_img_url": "https://example.com/avatars/jane.png"
+  "conversation_img_url": "https://example.com/avatars/jane.png",
+  "message_info": {
+    "message_id": "123456789",
+    "sender_id": 1,
+    "sender_display_name": "John Doe",
+    "message_type": "text",
+    "content": "Hi Jane, how are you?",
+    "created_at": "2026-11-22T18:05:05Z"
+  }
 }
 ```
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `conversation_id` | integer | ID of the new conversation. Also the ID used to load and send messages |
+| `conversation_id` | integer | New conversation ID; use it to load and send messages |
 | `conversation_type` | string | Always `direct` for this endpoint |
-| `receiver_id` | integer | ID of the user the conversation was started with. Lets the client confirm it went to the intended user |
-| `receiver_display_name` | string | The other user's display name |
-| `conversation_img_url` | string \| null | The other user's avatar URL, null if not set |
+| `receiver_id` | integer | ID of the other participant |
+| `receiver_display_name` | string | Display name of the other participant |
+| `conversation_img_url` | string \| null | Other participant's avatar URL, or `null` |
+| `message_info` | object | The first message created with the conversation |
 
-The first message is saved as part of the same request.
+`message_info` contains `message_id`, `sender_id`, `sender_display_name`,
+`message_type`, `content`, and `created_at`. The timestamp is an ISO 8601 UTC
+string.
 
-#### Error Responses
+### Error Responses
 
-The HTTP status code tells the client what kind of error it is, so the body has only one field.
+All errors use this JSON shape:
 
 ```json
 {
-  "message": "string"
+  "message": "error description"
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `message` | string | Human-readable reason, safe to show to the user |
-
-| Status | When | Example `message` |
-|--------|------|-------------------|
-| `400` | `user_id` is missing, not an integer, or is the logged-in user only whitespace, or too long | `user_id is missing` |
-| `401` | `Cookie` header is missing, or the session is invalid or expired | `"Not logged in"` |
-| `404` | Target user does not exist, or a block exists between the two users | `"User not found"` |
-| `409` | A direct conversation between the two users already exists | `"Conversation already exists"` |
+| Status | Condition | Example `message` |
+|--------|-----------|-------------------|
+| `400` | Missing or invalid `user_id`, self-conversation, invalid JSON body, empty message, or message longer than 2000 characters | `"message must not be empty"` |
+| `401` | No valid login session | `"401 Unauthorized"` |
+| `404` | Target user does not exist or is blocked | `"User not found"` |
+| `409` | A direct conversation between the users already exists | `"Conversation already exists"` |
 | `500` | Unexpected server error | `"Internal server error"` |
 
-**Example — 400**
+Example:
 
 ```json
 {
-  "message": "user_id is missing"
+  "message": "Conversation already exists"
 }
 ```

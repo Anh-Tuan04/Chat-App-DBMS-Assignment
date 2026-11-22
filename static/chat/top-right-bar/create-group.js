@@ -189,7 +189,7 @@ createGroupButton.addEventListener('click', async () => {
         showToast('Group created');
         await getConversations();
     } catch (error) {
-        showError('Could not create group');
+        showError(error?.message || 'Could not create group');
     } finally {
         isSubmitting = false;
         updateCreateButton();

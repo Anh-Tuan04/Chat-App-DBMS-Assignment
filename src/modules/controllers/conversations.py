@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import logging
 from typing import Any
 
 from flask import Blueprint, request, jsonify, session
@@ -7,6 +8,9 @@ from modules.repositories.conversations import Conversation
 from modules.services.conversations import ConversationSummary
 from modules.services.container import get_services
 from utils import error_response, login_required
+from modules.real_time_socket.extensions import socketio
+
+log = logging.getLogger(__name__)
 
 conversations_bp = Blueprint('conversation_bp', __name__, url_prefix='/api/conversations')
 
@@ -148,10 +152,39 @@ def create_conversation():
             return error_response(err, 404)
         if err == 'Cannot start a conversation with yourself':
             return error_response(err, 400)
+        if err.startswith(('Message', 'message', 'Cannot send message')):
+            return error_response(err, 400)
+        # Without this line the real cause is hidden behind a plain 500
+        log.error("new-conversation failed: user=%s other=%s err=%s", user_id, friend_id, err)
         return error_response('Internal server error', 500)
     if started is None:
         return error_response('Internal server error', 500)
     summary = started.conversation
+    msg = started.message
+    created_at_iso = _format_utc_iso(msg.created_at)
+    sender_display_name = (
+        get_services().users.get_display_names([user_id]).get(user_id) or str(msg.sender_id)
+    )
+
+    socket_payload = {
+        "sender_info": {
+            "user_id": msg.sender_id,
+            "username": getattr(msg, "sender_username", None) or "",
+            "display_name": sender_display_name,
+            "avatar_url": getattr(msg, "sender_avatar_url", None),
+        },
+        "conversation_id": summary.conversation_id,
+        "message": msg.content,
+        "message_type": "text",
+        "message_id": str(msg.message_id),
+        "created_at": created_at_iso,
+    }
+
+    socketio.emit(
+        "receive_message",
+        socket_payload,
+        room=f"user:{friend_id}",
+    )
     return jsonify(
         {
             "conversation_id": summary.conversation_id,
@@ -159,5 +192,13 @@ def create_conversation():
             "receiver_id": summary.receiver_id,
             "receiver_display_name": summary.display_name,
             "conversation_img_url": summary.conversation_img_url,
+            "message_info": {
+                "message_id": str(started.message.message_id),
+                "sender_id": started.message.sender_id,
+                "sender_display_name": sender_display_name,
+                "message_type": "text",
+                "content": started.message.content,
+                "created_at": _format_utc_iso(started.message.created_at),
+            }
         }
     ), 201

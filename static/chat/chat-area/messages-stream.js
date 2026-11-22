@@ -405,6 +405,13 @@ const createNewMessageStream = (messageStream, conversationId) => {
   messageStream.scrollTop = 0;
 };
 
+
+const clearMessageStream = (messageStream) => {
+  messageStream.replaceChildren();
+  delete messageStream.dataset.conversationId;
+  messageStream.scrollTop = 0;
+}
+
 /*
 HTML Skeleton Reference (content of #message-stream):
 <div class="date-divider">...</div>
@@ -418,4 +425,4 @@ const renderMessageStream = (messageStream, { dateLabel, messages }) => {
   );
 };
 
-export { messageStream, createDateDivider, createMessage, createNewMessageStream, renderMessageStream };
+export { messageStream, createDateDivider, createMessage, createNewMessageStream, renderMessageStream, clearMessageStream };

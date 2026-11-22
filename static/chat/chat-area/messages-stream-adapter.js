@@ -90,7 +90,7 @@ const detectContent = ({ type, content }) => {
 /* ---------- 3. Formatting helpers ---------- */
 
 const getInitials = (name) => {
-  const words = name.trim().split(/\s+/).filter(Boolean);
+  const words = String(name ?? '').trim().split(/\s+/).filter(Boolean);
   if (!words.length) return '?';
   const first = words[0][0];
   const last = words.length > 1 ? words[words.length - 1][0] : '';
@@ -206,7 +206,8 @@ HTML Skeleton Reference (content of #message-stream):
 // First page (no `before`), newest message last. Call it when a conversation is opened.
 // messagesStream: document.getElementById('message-stream')
 const renderMessageHistory = (messageStream, rawMessages) => {
-  const ordered = rawMessages.map(normalizeRestMessage);
+  // The REST array is newest first, the screen shows oldest first
+  const ordered = rawMessages.map(normalizeRestMessage).reverse();
   messageStream.replaceChildren(...buildStreamNodes(ordered));
   messageStream.scrollTop = messageStream.scrollHeight;
 };
@@ -226,7 +227,7 @@ const getOldestMessageId = (messageStream) => {
 // messagesStream: document.getElementById('message-stream')
 const prependOlderMessages = (messageStream, rawMessages) => {
   if (!rawMessages.length) return;
-  const ordered = rawMessages.map(normalizeRestMessage);
+  const ordered = rawMessages.map(normalizeRestMessage).reverse();
 
   // The current top divider is repeated when both pages share a day
   const newestOlderDay = getDayKey(ordered[ordered.length - 1].createdAt);

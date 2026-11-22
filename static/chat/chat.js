@@ -3,10 +3,11 @@ import { getConversations } from './conversation.js';
 import { realTimeSocket } from './real-time-socket.js';
 import { renderFriends } from "./top-right-bar/friends.js"
 import { initializeCreateGroup } from "./top-right-bar/create-group.js"
-
 import * as UserProfile from "./top-right-bar/user-profile.js"
 
 import { messageStreamElement } from "./chat-area/messages.js"
+
+import './sidebar-search.js';
 
 const $ = function (id) { return document.getElementById(id); };
 
@@ -21,7 +22,7 @@ const $ = function (id) { return document.getElementById(id); };
 // modalPreparers['id-of-modal'] = function () { ... };
 const modalPreparers = {
   "friends-modal": renderFriends,
-  "create-group-modal": initializeCreateGroup
+  // "create-group-modal": initializeCreateGroup
 };
 
 let lastFocused = null;
@@ -52,9 +53,6 @@ document.addEventListener('click', function (event) {
 });
 
 
-messageStreamElement.dataset.conversationId = 2;  // no conversation selected yet
-getConversations();
-
 // Backdrop, X button and Cancel button: anything with data-close
 document.addEventListener('click', function (event) {
   const closeTrigger = event.target.closest('[data-close]');
@@ -66,6 +64,9 @@ document.addEventListener('keydown', function (event) {
   if (event.key !== 'Escape') return;
   document.querySelectorAll('.modal:not([hidden])').forEach(closeModal);
 });
+
+
+getConversations();
 
 
 /*

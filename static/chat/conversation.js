@@ -209,11 +209,14 @@ function renderConversations(conversations) {
 
 
 
-export function handleNewMessageComing({ conversationId, message, createAt }) {
+export async function handleNewMessageComing({ conversationId, message, createAt }) {
     const item = Array.from(conversationList.children).find(
         (child) => child.dataset.conversationId === conversationId
     );
-    if (!item) return;
+    if (!item) {
+        await getConversations();  // fetch and render the conversation list again
+        return;
+    }
 
     item.querySelector('.conversation-preview').textContent = message;
     item.querySelector('.conversation-time').textContent = formatConversationTime(createAt);
@@ -227,6 +230,8 @@ export function handleNewMessageComing({ conversationId, message, createAt }) {
         item.querySelector('.conversation-avatar-wrap').appendChild(unreadBadge);
     }
     unreadBadge.textContent = Number(unreadBadge.textContent) + 1;
+    // make the item move to the top of the list
+    conversationList.prepend(item);
 }
 
 // handle get conversations from server
@@ -290,17 +295,13 @@ conversationList.addEventListener('click', async (event) => {
     if (previousItem) previousItem.classList.remove('is-active');
     conversationItem.classList.add('is-active');
 
-    // 2. Mark as read on the server first
-    const isMarkedRead = await markConversationRead(conversationId);
-
-    // The user may have clicked another conversation while waiting
-    if (messageStreamElement.dataset.conversationId !== conversationId) return;
-
-    if (isMarkedRead) {
+    // 2. Mark as read in parallel: do not make the messages wait for the ack
+    const markReadPromise = markConversationRead(conversationId).then((isMarkedRead) => {
+        if (!isMarkedRead) return;
         conversationItem.classList.remove('has-unread');
         const unreadBadge = conversationItem.querySelector('.unread-badge');
         if (unreadBadge) unreadBadge.remove();
-    }
+    });
 
     // 3. Request the first page (no `before`)
     try {
@@ -320,6 +321,9 @@ conversationList.addEventListener('click', async (event) => {
 
         // 4. Fill the stream
         renderMessageHistory(messageStreamElement, body);
+        
+        document.getElementById('conversation-name').textContent = conversationItem.querySelector('.conversation-name').textContent;
+        document.getElementById('chat-input').focus();
     } catch (error) {
         showError('Failed to load messages');
     }

@@ -6,11 +6,15 @@ const BASE_URL = 'http://localhost:5000'; // Replace with your actual backend UR
 
 const userAvatar = document.querySelector('.user-avatar');
 
-const currentUser = {
-  id: 'u0',
-  name: 'Alex Mercer',
-  role: { label: 'Lead', variant: 'lead' }
-};
+// const currentUser = {
+//   id: localStorage.getItem('userId') || '1', // Default to '1' if not found
+//   name: localStorage.getItem('userName') || 'Alex Mercer', // Default to 'Alex Mercer' if not found
+//   role: { label: 'Lead', variant: 'lead' }
+// };
+
+const currentUser = JSON.parse(
+  localStorage.getItem('user') || '{}'
+);
 
 const userMenuItems = [
   { id: 'profile', label: 'Profile', icon: 'person' },
@@ -91,8 +95,8 @@ HTML Skeleton Reference:
 */
 function createUserMenu() {
   const header = createElement('div', 'user-menu-header');
-  header.appendChild(createElement('span', 'user-menu-name', currentUser.name));
-  header.appendChild(createElement('span', 'user-menu-role', currentUser.role.label));
+  header.appendChild(createElement('span', 'user-menu-name', currentUser.username));
+  header.appendChild(createElement('span', 'user-menu-role', 'User'));
 
   const menu = createElement('div', 'user-menu');
   menu.id = 'user-menu';

@@ -1,7 +1,8 @@
 import { appendIncomingMessage } from './messages-stream-adapter.js';
 import { realTimeSocket } from '../real-time-socket.js';
-import { handleNewMessageComing } from '../conversation.js';
+import { handleNewMessageComing, getConversations } from '../conversation.js';
 import { showError } from '../error.js';
+
 
 
 const currentUser = JSON.parse(
@@ -19,7 +20,64 @@ const handleSubmitMessage = async (messageStream) => {
 
   const conversationId = messageStream.dataset.conversationId;   // changed: from the stream
   if (!conversationId) {
-    showError('Select a conversation first.');
+    // No open conversation: only allowed when a user was picked in the sidebar search
+    const receiverId = document.getElementById('conversation-name').dataset.receiverId;
+    if (!receiverId) {
+      showError('Select a conversation first.');
+      return;
+    }
+    try {
+      // create new conversation
+      let res = await fetch(
+        `${window.location.origin}/api/conversations/new-conversation?user_id=${encodeURIComponent(receiverId)}`,
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          method: 'POST',
+          credentials: 'include',
+          body: JSON.stringify({
+            message: text
+          }),
+        }
+      )
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        if (res.status === 409) {
+          showError('You already have a conversation with this user. Open it from the list.');
+        } else {
+          showError(errorData.message || errorData.error || ('Failed to create conversation (HTTP ' + res.status + ')'));
+        }
+        return;
+      }
+
+      let data = await res.json();
+      messageStream.dataset.conversationId = String(data.conversation_id);
+      appendIncomingMessage(messageStream, {
+        message_id: data.message_info.message_id,
+        sender_info: {
+          user_id: data.message_info.sender_id,
+          display_name: currentUser.display_name || String(data.message_info.sender_display_name ?? ''),
+          avatar_url: currentUser.avatar_url ?? null
+        },
+        conversation_id: data.conversation_id,
+        message_type: data.message_info.message_type,
+        message: data.message_info.content,
+        created_at: data.message_info.created_at
+      });
+      messageStream.scrollTop = messageStream.scrollHeight;
+
+      // Success: clear the input, forget the receiver, show the new conversation in the sidebar
+      chatInput.value = '';
+      delete document.getElementById('conversation-name').dataset.receiverId;
+      await getConversations();
+      const newItem = document.querySelector(
+        `.conversation-item[data-conversation-id="${data.conversation_id}"]`
+      );
+      if (newItem) newItem.classList.add('is-active');
+    } catch (error) {
+      showError(error.message || 'Failed to create the conversation');
+    }
     return;
   }
   if (!realTimeSocket.connected) {
@@ -77,7 +135,7 @@ chatInput.addEventListener('keydown', (event) => {
 });
 
 
-realTimeSocket.on('receive_message', (payload) => {
+realTimeSocket.on('receive_message', async (payload) => {
   const openConversationId = messageStreamElement.dataset.conversationId;
 
   if (String(payload.conversation_id) === openConversationId) {
@@ -86,9 +144,160 @@ realTimeSocket.on('receive_message', (payload) => {
   }
 
   // Message for another conversation: update the sidebar item (preview, time, bold, unread badge)
-  // handleNewMessageComing({
-  //   conversationId: String(payload.conversation_id),
-  //   message: payload.message,
-  //   createAt: payload.created_at
-  // });
+  await handleNewMessageComing({
+    conversationId: String(payload.conversation_id),
+    message: payload.message,
+    createAt: payload.created_at
+  });
 });
+
+/*
+    {
+        sender_info: {
+            "user_id": 12,
+            "username": "johnny",
+            "display_name": "Johnny Smith",
+            "avatar_url": null
+        },
+        "conversation_id": "conv123",
+        "message": "Hello, this is a test message.",
+        message_id: "1354263578912345678",
+        created_at: "2026-11-19T05:20:00Z"
+    }
+*/
+
+
+/*
+# Conversations API
+
+## Create a Direct Conversation
+
+Create a new direct conversation between the logged-in user and another user.
+The first message is created in the same request and cannot be empty.
+The logged-in user is identified by the Flask session cookie.
+
+### Endpoint
+
+| Method | URL |
+|--------|-----|
+| `POST` | `{BASE_URL}/api/conversations/new-conversation?user_id={user_id}` |
+
+Example base URL: `http://127.0.0.1:5000`
+
+### Query Parameters
+
+| Parameter | Type | Required | Constraints | Description |
+|-----------|------|----------|-------------|-------------|
+| `user_id` | integer | Yes | Must identify an existing user other than the logged-in user | User to start the conversation with |
+
+Example:
+
+```http
+POST /api/conversations/new-conversation?user_id=7
+```
+
+### Request
+
+#### Headers
+
+| Header | Value | Required | Description |
+|--------|-------|----------|-------------|
+| `Content-Type` | `application/json` | Yes | Request body format |
+| `Accept` | `application/json` | No | Expected response format |
+| Cookie | Flask session cookie | Yes | Created by login; use `credentials: "include"` with `fetch` when needed |
+
+#### Body
+
+```json
+{
+  "message": "Hi Jane, how are you?"
+}
+```
+
+| Field | Type | Required | Constraints | Description |
+|-------|------|----------|-------------|-------------|
+| `message` | string | Yes | 1–2000 characters; not empty or whitespace-only | First message in the conversation |
+
+JavaScript example:
+
+```javascript
+const response = await fetch(
+  "/api/conversations/new-conversation?user_id=7",
+  {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    },
+    body: JSON.stringify({ message: "Hi Jane, how are you?" })
+  }
+);
+
+const data = await response.json();
+```
+
+### Successful Response
+
+#### `201 Created`
+
+The conversation and its first message were created successfully.
+
+```json
+{
+  "conversation_id": 3,
+  "conversation_type": "direct",
+  "receiver_id": 7,
+  "receiver_display_name": "Jane Doe",
+  "conversation_img_url": "https://example.com/avatars/jane.png",
+  "message_info": {
+    "message_id": "123456789",
+    "sender_id": 1,
+    "sender_display_name": "John Doe",
+    "message_type": "text",
+    "content": "Hi Jane, how are you?",
+    "created_at": "2026-11-22T18:05:05Z"
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `conversation_id` | integer | New conversation ID; use it to load and send messages |
+| `conversation_type` | string | Always `direct` for this endpoint |
+| `receiver_id` | integer | ID of the other participant |
+| `receiver_display_name` | string | Display name of the other participant |
+| `conversation_img_url` | string \| null | Other participant's avatar URL, or `null` |
+| `message_info` | object | The first message created with the conversation |
+
+`message_info` contains `message_id`, `sender_id`, `sender_display_name`,
+`message_type`, `content`, and `created_at`. The timestamp is an ISO 8601 UTC
+string.
+
+### Error Responses
+
+All errors use this JSON shape:
+
+```json
+{
+  "message": "error description"
+}
+```
+
+| Status | Condition | Example `message` |
+|--------|-----------|-------------------|
+| `400` | Missing or invalid `user_id`, self-conversation, invalid JSON body, empty message, or message longer than 2000 characters | `"message must not be empty"` |
+| `401` | No valid login session | `"401 Unauthorized"` |
+| `404` | Target user does not exist or is blocked | `"User not found"` |
+| `409` | A direct conversation between the users already exists | `"Conversation already exists"` |
+| `500` | Unexpected server error | `"Internal server error"` |
+
+Example:
+
+```json
+{
+  "message": "Conversation already exists"
+}
+```
+
+*/
