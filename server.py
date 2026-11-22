@@ -24,7 +24,7 @@ from src.modules.controllers.auth import auth_bp
 from src.modules.controllers.conversations import conversations_bp
 from src.modules.controllers.messages import messages_bp
 from src.modules.controllers.notifications import notifications_bp
-from src.modules.controllers.relationships import relationships_bp
+from src.modules.controllers.relationships import relationships_bp, blocks_bp
 from src.modules.controllers.users import users_bp
 from src.users.routes import users_routes_bp
 
@@ -73,6 +73,7 @@ def create_app(config: dict | None = None) -> Flask:
     app.register_blueprint(messages_bp)
     app.register_blueprint(notifications_bp)
     app.register_blueprint(relationships_bp)
+    app.register_blueprint(blocks_bp)
     app.register_blueprint(users_bp)
     app.register_blueprint(users_routes_bp)
 

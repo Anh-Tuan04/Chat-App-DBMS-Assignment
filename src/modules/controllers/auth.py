@@ -41,7 +41,6 @@ def register():
     if len(password) > 128:
         return error_response('Password too long', 400)
 
-    # TODO: implement register service call
     user, err = get_services().auth.register(username, password, display_name)
     if err:
         match err:
@@ -49,14 +48,6 @@ def register():
                 return error_response(err, 409)
             case _:
                 return error_response("Internal server error", 500)
-
-    # still a hardcoded response for testing
-    # user = {
-    #     'user_id': 1,
-    #     'username': username,
-    #     'display_name': display_name,
-    #     'created_at': datetime.datetime.now().replace(microsecond=0).isoformat()
-    # }
 
     return jsonify(user), 200
 
@@ -80,7 +71,6 @@ def login():
         return error_response("Wrong input type", 400)
     # TODO: sanitize, type check, constraint enforce
 
-    # TODO: call auth service
     user, err = get_services().auth.login(username, password)
     if err or user is None:
         match err:
@@ -88,14 +78,6 @@ def login():
                 return error_response(err, 401)
             case _:
                 return error_response("Internal server error", 500)
-
-    # hardcoded response for now
-    # user = {
-    #     'user_id': 1,
-    #     'username': username,
-    #     'display_name': 'Test user',  
-    #     'avatar_url': ''
-    # }
 
     session["user_id"] = user.get("user_id")
     return jsonify(user), 200
@@ -105,11 +87,8 @@ def login():
 @login_required
 def logout():
     user_id = session.get("user_id")
-
-    # TODO: call service
     _, err = get_services().auth.logout(user_id)
     if err:
         return error_response("Internal server error", 500)
-
     session.clear()
     return '', 204
