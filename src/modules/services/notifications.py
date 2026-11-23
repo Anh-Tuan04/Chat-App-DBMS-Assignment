@@ -29,6 +29,36 @@ class NotificationService:
         self._relationships = relationships
         self._users = users
         self._conversations = conversations
+        # Called with (user_id, payload) after a notification is stored, to push it in real time.
+        # It is set from server.py (set_publisher) so this service never imports the socket code.
+        self._publisher = None
+
+    def set_publisher(self, publisher) -> None:
+        self._publisher = publisher
+
+    def _add_and_push(self, user_id: int, notification_type: str, related_id: int | None) -> Notification:
+        notification = self._notifications.add(
+            user_id=user_id, notification_type=notification_type, related_id=related_id
+        )
+        self._push(user_id, notification)
+        return notification
+
+    def _push(self, user_id: int, notification: Notification) -> None:
+        """Send the new notification to the user's socket room, in the same shape as GET /api/notifications.
+        A failure here never fails the request: the notification is already saved."""
+        if self._publisher is None:
+            return
+        try:
+            # The newest notification of the user is the one just stored; build its payload
+            # with the same code the list endpoint uses.
+            payloads, err = self.list_for_user_payload(user_id, limit=1)
+            if err or not payloads:
+                return
+            if payloads[0]["notification_id"] != str(notification.notification_id):
+                return
+            self._publisher(user_id, payloads[0])
+        except Exception:
+            log.exception("push notification failed: user=%s", user_id)
 
     @staticmethod
     def _format_utc_iso(value: datetime) -> str:
@@ -42,7 +72,7 @@ class NotificationService:
         self, target_user_id: int, request_id: int
     ) -> tuple[Notification | None, str | None]:
         try:
-            return self._notifications.add(
+            return self._add_and_push(
                 user_id=target_user_id,
                 notification_type=NotificationType.FRIEND_REQUEST,
                 related_id=request_id,
@@ -55,7 +85,7 @@ class NotificationService:
         self, target_user_id: int, friend_user_id: int
     ) -> tuple[Notification | None, str | None]:
         try:
-            return self._notifications.add(
+            return self._add_and_push(
                 user_id=target_user_id,
                 notification_type=NotificationType.FRIEND_ACCEPTED,
                 related_id=friend_user_id,
@@ -68,7 +98,7 @@ class NotificationService:
         self, target_user_id: int, conversation_id: int
     ) -> tuple[Notification | None, str | None]:
         try:
-            return self._notifications.add(
+            return self._add_and_push(
                 user_id=target_user_id,
                 notification_type=NotificationType.ADDED_TO_GROUP,
                 related_id=conversation_id,
@@ -245,4 +275,3 @@ class NotificationService:
         except Exception:
             log.exception("delete notification failed: user=%s notification=%s", user_id, notification_id)
             return None, "Internal server error"
-

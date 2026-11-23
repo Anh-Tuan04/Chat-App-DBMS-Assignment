@@ -5,4 +5,4 @@ def init_socketio(app):
 
     # Importing the modules runs their @socketio.on decorators.
     # Without these imports, the handlers never exist.
-    from .events import connection, messages, conversation  # noqa: F401
+    from .events import connection, messages, conversation, notifications  # noqa: F401

@@ -59,13 +59,13 @@ def friend_request():
         match err:
             case 'Friend not exist' | 'Blocked':
                 return error_response(err, 404)
-            case 'Already friend':
+            case 'Already friend' | 'Friend request already exists':
                 return error_response(err, 409)
             case _:
                 return error_response('Internal server error', 500)
 
     # Will only get to this point if a friend request is registered in DB
-    return jsonify(receiver_id=friend_id), 200
+    return jsonify(receiver_id=friend_id), 201
 
     # Get friend request list
     # else:

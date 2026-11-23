@@ -1,22 +1,38 @@
 from flask import session
 from ..extensions import socketio
-from modules.services import notifications
+from modules.services.container import get_services
+
 
 @socketio.on('read_notification')
-def handle_read_notification(data):
-    notification_id = data.get('notification_id')
-    if not notification_id:
-        socketio.emit('error', {'message': 'notification_id is required'})
-        return
+def on_read_notification(data):
+    """
+    Mark notifications as read for the logged-in user.
 
+    data:
+    { "notification_ids": ["1789432156738291900", "1789432156738291850"] }
+
+    ack (the dict returned here, received by emitWithAck on the client):
+    success: { "status": "success", "notification_ids": ["1789432156738291900", ...] }
+    error:   { "status": "error", "message": "string" }
+    """
+    if not isinstance(data, dict):
+        return {'status': 'error', 'message': 'Data must be a json object'}
+
+    # The user comes from the session cookie, never from the client payload
     user_id = session.get('user_id')
     if not user_id:
-        socketio.emit('error', {'message': 'user_id is required'})
-        return
+        return {'status': 'error', 'message': 'Not logged in'}
 
-    _, err = notifications.mark_as_read(notification_id, user_id)
+    raw_ids = data.get('notification_ids')
+    if not isinstance(raw_ids, list) or not raw_ids or len(raw_ids) > 100:
+        return {'status': 'error', 'message': 'notification_ids must be a list of 1 to 100 ids'}
+    try:
+        notification_ids = [int(raw_id) for raw_id in raw_ids]   # ids arrive as strings
+    except (TypeError, ValueError):
+        return {'status': 'error', 'message': 'notification_ids must be integers'}
+
+    _, err = get_services().notifications.mark_read(user_id, notification_ids)
     if err:
-        socketio.emit('error', {'message': str(err)})
-        return
+        return {'status': 'error', 'message': err}
 
-    socketio.emit('notification_read', {'status': 'success', 'notification_id': notification_id})
+    return {'status': 'success', 'notification_ids': [str(notification_id) for notification_id in notification_ids]}

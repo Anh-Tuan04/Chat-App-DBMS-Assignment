@@ -63,13 +63,14 @@ class RelationshipService:
                 if summary is None and full_user is None:
                     continue
                 username = full_user.username if full_user else summary.username
+                display_name = (summary.display_name if summary else None) or username
                 avatar_url = full_user.avatar_url if full_user else summary.avatar_url
                 online_status = full_user.online_status if full_user else "offline"
                 result.append(
                     {
                         "friend_id": f.user_id,
                         "friend_username": username,
-                        "friend_display_name": username,
+                        "friend_display_name": display_name,
                         "friend_avatar_url": avatar_url,
                         "friend_online_status": online_status,
                     }

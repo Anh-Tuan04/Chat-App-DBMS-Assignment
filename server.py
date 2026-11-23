@@ -35,6 +35,7 @@ from src.users.routes import users_routes_bp
 
 from src.modules.real_time_socket import init_socketio
 from src.modules.real_time_socket.extensions import socketio
+from src.modules.real_time_socket.emitters.notifications import emit_notification
 from src.modules.services.container import init_app_services
 
 
@@ -66,7 +67,10 @@ def create_app(config: dict | None = None) -> Flask:
         app.config.update(config)
 
     app.session_interface = SkippableSessionInterface()
-    init_app_services(app)
+    services = init_app_services(app)
+    # Push each stored notification to the receiver's socket room ("user:{id}"), so the bell
+    # badge updates in real time. The service only knows the callable, never the socket code.
+    services.notifications.set_publisher(emit_notification)
 
     # Force flask's abort to also not set cookie
     @app.errorhandler(HTTPException)
@@ -100,6 +104,6 @@ if __name__ == "__main__":
         app,
         host="0.0.0.0",
         port=5000,
-        debug=True,
+        debug=False,
         allow_unsafe_werkzeug=True,
     )

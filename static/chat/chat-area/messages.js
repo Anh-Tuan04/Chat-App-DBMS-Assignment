@@ -31,7 +31,7 @@ const chatInput = document.getElementById('chat-input');
 const sendButton = document.getElementById('send-btn');
 export const messageStreamElement = document.getElementById('message-stream');
 
-const ACK_TIMEOUT_MS = 5000;
+const ACK_TIMEOUT_MS = 10000;
 
 const MESSAGES_PAGE_LIMIT = 30;
 
@@ -327,40 +327,11 @@ const handleSubmitMessage = async (messageStream) => {
     message: text
   };
 
+  // No ack: the server saves the message, then emits 'receive_message' to every member,
+  // this user included, and that handler draws it. A failure comes back as 'send_message_error'.
+  realTimeSocket.emit('send_message', payload);
   chatInput.value = '';
   chatInput.focus();
-  const restoreText = () => { if (!chatInput.value) chatInput.value = text; };
-
-  try {
-    const response = await realTimeSocket
-      .timeout(ACK_TIMEOUT_MS)
-      .emitWithAck('send_message', payload);
-
-    if (response.status !== 'success') {
-      showError(response.message);
-      restoreText();
-      return;
-    }
-
-    // changed: the stream may now belong to another conversation
-    if (messageStream.dataset.conversationId !== conversationId) return;
-
-    appendIncomingMessage(messageStream, {
-      ...payload,
-      message_id: response.message_id,
-      created_at: response.created_at
-    });
-    // Sidebar: your own message becomes the preview of this conversation (after the server confirmed)
-    updateConversationPreview({
-      conversationId,
-      message: text,
-      createAt: response.created_at
-    });
-    messageStream.scrollTop = messageStream.scrollHeight;
-  } catch (error) {
-    showError('The server did not respond. The message may not have been sent.');
-    restoreText();
-  }
 };
 
 sendButton.addEventListener('click', () => handleSubmitMessage(messageStreamElement));
@@ -372,21 +343,39 @@ chatInput.addEventListener('keydown', (event) => {
 });
 
 
+// Every saved message arrives here: from the chat partner, and also our own (the server
+// echoes it to all members, so each of this user's tabs shows it once it is saved).
 realTimeSocket.on('receive_message', async (payload) => {
-  const openConversationId = messageStreamElement.dataset.conversationId;
+  const conversationId = String(payload.conversation_id);
+  const isOwn = currentUser.user_id != null &&
+    String(payload.sender_info?.user_id) === String(currentUser.user_id);
+  const preview = { conversationId, message: payload.message, createAt: payload.created_at };
 
-  if (String(payload.conversation_id) === openConversationId) {
+  // The open conversation: show it in the stream AND update its sidebar preview
+  if (conversationId === messageStreamElement.dataset.conversationId) {
     appendIncomingMessage(messageStreamElement, payload);
-    scheduleMarkRead();   // the user is looking at it: save "read up to this message"
+    if (isOwn) messageStreamElement.scrollTop = messageStreamElement.scrollHeight;
+    if (!updateConversationPreview(preview)) await getConversations();
+    if (!isOwn) scheduleMarkRead();   // the user is looking at it: save "read up to this message"
     return;
   }
 
-  // Message for another conversation: update the sidebar item (preview, time, bold, unread badge)
-  await handleNewMessageComing({
-    conversationId: String(payload.conversation_id),
-    message: payload.message,
-    createAt: payload.created_at
-  });
+  // Another conversation, our own message (sent from another tab): preview only, never unread
+  if (isOwn) {
+    if (!updateConversationPreview(preview)) await getConversations();
+    return;
+  }
+
+  // Another conversation, from someone else: preview, time, bold, unread badge
+  await handleNewMessageComing(preview);
+});
+
+// The server refused a message: show why, and give the text back if the composer is still empty
+realTimeSocket.on('send_message_error', (payload) => {
+  showError(payload?.message || 'The message could not be sent.');
+  const isSameConversation =
+    !payload?.conversation_id || payload.conversation_id === messageStreamElement.dataset.conversationId;
+  if (payload?.text && isSameConversation && !chatInput.value) chatInput.value = payload.text;
 });
 
 /*

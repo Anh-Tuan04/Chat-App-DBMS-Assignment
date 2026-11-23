@@ -248,7 +248,7 @@ HTML Skeleton Reference (appended at the end of #message-stream):
 */
 // Endpoint: Socket.IO event 'receive_message' (server emits it after a client's 'send_message')
 // Payload: { sender_info, conversation_id, message, message_id, created_at }
-// Your own message: use the data from the 'message_sent' event once it includes message_id and created_at.
+// Your own message arrives through the same event: the server echoes it to the sender's room too.
 // messagesStream: document.getElementById('message-stream')
 const appendIncomingMessage = (messageStream, payload) => {
   const message = normalizeSocketMessage(payload);

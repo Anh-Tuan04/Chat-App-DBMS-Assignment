@@ -294,6 +294,8 @@ img { display: block; }
 
 .status-dot.is-online { background: var(--color-accent); }
 .status-dot.is-idle   { background: var(--color-warning); }
+.status-dot.is-dnd    { background: var(--color-error); }
+.status-dot.is-offline { background: var(--color-text-subtle); }
 
 .unread-badge {
   position: absolute;

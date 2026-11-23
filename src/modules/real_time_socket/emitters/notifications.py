@@ -63,4 +63,6 @@ def emit_notification(receiver_id: int, payload: dict):
             }
             ```
     """
-    socketio.emit('receive_notification', payload, room=receiver_id, include_self=False)
+    # Rooms are named "user:{id}" in events/connection.py.
+    # No include_self=False: this runs inside an HTTP request, where there is no socket id to skip.
+    socketio.emit('receive_notification', payload, room=f"user:{receiver_id}")

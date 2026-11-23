@@ -1,7 +1,9 @@
 import { getConversations } from './conversation.js';
 // import { initializeUserSearch } from "./top-right-bar/add-friend.js";
 import { realTimeSocket } from './real-time-socket.js';
-import { renderFriends } from "./top-right-bar/friends.js"
+import { prepareFriendsModal } from "./top-right-bar/friends.js"
+import { prepareAddFriendModal } from "./top-right-bar/add-friend.js"
+import { prepareNotificationsModal } from "./top-right-bar/notifications.js"
 import { initializeCreateGroup } from "./top-right-bar/create-group.js"
 import * as UserProfile from "./top-right-bar/user-profile.js"
 
@@ -21,7 +23,9 @@ const $ = function (id) { return document.getElementById(id); };
 // What each dialog shows when it opens. Each feature script adds its own entry:
 // modalPreparers['id-of-modal'] = function () { ... };
 const modalPreparers = {
-  "friends-modal": renderFriends,
+  "friends-modal": prepareFriendsModal,
+  "add-friend-modal": prepareAddFriendModal,
+  "notifications-modal": prepareNotificationsModal,
   // "create-group-modal": initializeCreateGroup
 };
 
