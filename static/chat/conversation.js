@@ -1,5 +1,5 @@
 import { realTimeSocket } from "./real-time-socket.js";
-import { createNewMessageStream } from './chat-area/messages-stream.js';
+import { createNewMessageStream, clearMessageStream } from './chat-area/messages-stream.js';
 import { renderMessageHistory } from './chat-area/messages-stream-adapter.js';
 import { showError } from "./error.js"
 
@@ -134,7 +134,8 @@ export function createConversationItem({
     unreadCount,
     name,
     time,
-    preview
+    preview,
+    receiverId
 }) {
     if (!id || !name) {
         showError('Missing required conversation properties: id and name are required.');
@@ -145,6 +146,10 @@ export function createConversationItem({
     conversationItem.classList.add('conversation-item');
     if (id) {
         conversationItem.setAttribute('data-conversation-id', id);
+    }
+    // The other person of a direct conversation (null for a group). Used to find the row by user.
+    if (receiverId !== undefined && receiverId !== null) {
+        conversationItem.dataset.receiverId = String(receiverId);
     }
 
     const conversationAvatarWrap = createConversationAvatarWrap({avatarUrl, initials, isGroup, status, unreadCount});
@@ -166,6 +171,10 @@ function initials(name = '') {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
+// Module level: renderConversations and handleNewMessageComing both need it
+const formatConversationTime = (iso) =>
+    iso ? new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+
 function renderConversations(conversations) {
     if (!Array.isArray(conversations)) {
         showError('Invalid conversations data: expected an array.');
@@ -174,9 +183,6 @@ function renderConversations(conversations) {
 
     const activeConversationId = conversationList
         .querySelector('.conversation-item.is-active')?.dataset.conversationId;
-    const formatConversationTime = (iso) =>
-        iso ? new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-
     conversationList.replaceChildren();
     if (conversations.length === 0) {
         const emptyState = document.createElement('p');
@@ -192,6 +198,7 @@ function renderConversations(conversations) {
             avatarUrl: conversation.conversation_img_url,
             initials: initials(conversation.display_name),
             isGroup: conversation.conversation_type === 'group',
+            receiverId: conversation.receiver_id,
             unreadCount: Number(conversation.unread_count) || 0,
             name: conversation.display_name,
             time: formatConversationTime(conversation.latest_message?.created_at),
@@ -209,17 +216,33 @@ function renderConversations(conversations) {
 
 
 
-export async function handleNewMessageComing({ conversationId, message, createAt }) {
+// Updates the preview and the time of a row and moves it to the top. No unread badge.
+// Used for your own sent message (messages.js) and, through handleNewMessageComing, for incoming ones.
+// Returns false when the row is not in the list.
+export function updateConversationPreview({ conversationId, message, createAt }) {
     const item = Array.from(conversationList.children).find(
         (child) => child.dataset.conversationId === conversationId
     );
-    if (!item) {
-        await getConversations();  // fetch and render the conversation list again
-        return;
-    }
+    if (!item) return false;
 
     item.querySelector('.conversation-preview').textContent = message;
     item.querySelector('.conversation-time').textContent = formatConversationTime(createAt);
+    conversationList.prepend(item);   // newest conversation on top
+    return true;
+}
+
+// A message from someone else for a conversation that is not open:
+// update the row, make it bold and add 1 to its unread badge.
+export async function handleNewMessageComing({ conversationId, message, createAt }) {
+    const isUpdated = updateConversationPreview({ conversationId, message, createAt });
+    if (!isUpdated) {
+        await getConversations();  // new conversation: fetch and render the conversation list again
+        return;
+    }
+
+    const item = conversationList.querySelector(
+        '.conversation-item[data-conversation-id="' + CSS.escape(conversationId) + '"]'
+    );
     item.classList.add('has-unread');
 
     let unreadBadge = item.querySelector('.unread-badge');
@@ -230,8 +253,6 @@ export async function handleNewMessageComing({ conversationId, message, createAt
         item.querySelector('.conversation-avatar-wrap').appendChild(unreadBadge);
     }
     unreadBadge.textContent = Number(unreadBadge.textContent) + 1;
-    // make the item move to the top of the list
-    conversationList.prepend(item);
 }
 
 // handle get conversations from server
@@ -280,15 +301,27 @@ const markConversationRead = async (conversationId) => {
     }
 };
 
-conversationList.addEventListener('click', async (event) => {
-    const conversationItem = event.target.closest('.conversation-item');
-    if (!conversationItem) return;
+/*
+Sidebar row of the direct conversation with a user, or null.
+HTML Skeleton Reference (what is matched):
+<div class="conversation-item" data-conversation-id="3" data-receiver-id="7">...</div>
+*/
+export const findConversationItemByReceiverId = (userId) =>
+    conversationList.querySelector(
+        '.conversation-item[data-receiver-id="' + CSS.escape(String(userId)) + '"]'
+    );
 
+// Opens a conversation of the sidebar: new stream, highlight, mark read, load the first page.
+// conversationItem: a `.conversation-item` element of #conversation-list
+export const openConversation = async (conversationItem) => {
     const conversationId = conversationItem.dataset.conversationId;
     if (messageStreamElement.dataset.conversationId === conversationId) return;   // already open
 
-    // 1. Empty the stream; it now belongs to the clicked conversation
+    // 1. Empty the stream; it now belongs to this conversation
     createNewMessageStream(messageStreamElement, conversationId);
+
+    // A conversation is open now: forget a receiver picked for a new chat
+    delete document.getElementById('conversation-name').dataset.receiverId;
 
     // Sidebar: highlight this item at once
     const previousItem = conversationList.querySelector('.conversation-item.is-active');
@@ -296,7 +329,7 @@ conversationList.addEventListener('click', async (event) => {
     conversationItem.classList.add('is-active');
 
     // 2. Mark as read in parallel: do not make the messages wait for the ack
-    const markReadPromise = markConversationRead(conversationId).then((isMarkedRead) => {
+    markConversationRead(conversationId).then((isMarkedRead) => {
         if (!isMarkedRead) return;
         conversationItem.classList.remove('has-unread');
         const unreadBadge = conversationItem.querySelector('.unread-badge');
@@ -321,12 +354,40 @@ conversationList.addEventListener('click', async (event) => {
 
         // 4. Fill the stream
         renderMessageHistory(messageStreamElement, body);
-        
+
         document.getElementById('conversation-name').textContent = conversationItem.querySelector('.conversation-name').textContent;
         document.getElementById('chat-input').focus();
     } catch (error) {
         showError('Failed to load messages');
     }
+};
+
+// A user was picked (sidebar search row, friends modal). No request is sent:
+//   - the sidebar already has a conversation with this user -> open it, return true
+//   - otherwise -> empty composer ready for a NEW chat (the first message creates the
+//     conversation, see messages.js), return false
+export const openChatWithUser = ({ userId, name }) => {
+    const existingItem = findConversationItemByReceiverId(userId);
+    if (existingItem) {
+        openConversation(existingItem);
+        return true;
+    }
+
+    clearMessageStream(messageStreamElement);
+    const previousItem = conversationList.querySelector('.conversation-item.is-active');
+    if (previousItem) previousItem.classList.remove('is-active');
+
+    const conversationName = document.getElementById('conversation-name');
+    conversationName.textContent = name;
+    conversationName.dataset.receiverId = String(userId);
+    document.getElementById('chat-input').focus();
+    return false;
+};
+
+// One click listener for the whole list: the row says which conversation via data-conversation-id
+conversationList.addEventListener('click', (event) => {
+    const conversationItem = event.target.closest('.conversation-item');
+    if (conversationItem) openConversation(conversationItem);
 });
 
 

@@ -1,5 +1,6 @@
 import { showError } from '../error.js';
 import { showToast } from '../toast.js';
+import { openChatWithUser } from '../conversation.js';
 
 /*
 <!-- ===== Modal: Friends List ===== -->
@@ -176,7 +177,17 @@ export function renderFriends() {
 
 friendsList.addEventListener('click', function (event) {
     const button = event.target.closest('[data-action="remove-friend"]');
-    if (!button) return;
+    if (!button) {
+        // Click on the row itself: chat with this friend (data-friend-list-id is the friend's user id)
+        const friendRow = event.target.closest('[data-friend-list-id]');
+        if (!friendRow) return;
+        openChatWithUser({
+            userId: friendRow.dataset.friendListId,
+            name: friendRow.querySelector('.user-row-name').textContent
+        });
+        document.getElementById('friends-modal').hidden = true;
+        return;
+    }
     const row = button.closest('[data-friend-list-id]');
     // removeFriendHandle(row.dataset.friendListId); // not implemented yet
     showToast(`Friend naming ${friendsItems.find(f => f.id === parseInt(row.dataset.friendListId)).name} removed`);

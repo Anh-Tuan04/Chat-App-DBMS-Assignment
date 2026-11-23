@@ -1,6 +1,5 @@
 import { showError } from './error.js';
-import { conversationList } from './conversation.js';
-import { clearMessageStream } from './chat-area/messages-stream.js'
+import { conversationList, openChatWithUser } from './conversation.js';
 
 /* Sidebar search (users only for now).
    Nothing is sent while typing. Pressing Enter in the search box sends the search;
@@ -309,18 +308,14 @@ const handleUnblock = (row) => changeRelationship(row, {
   nextStatus: null
 });
 
+// Click on a user row (not on one of its buttons): open the existing conversation with this
+// user, or prepare a new chat. Nothing is sent to the server.
 const handleClickUserRow = (row) => {
     const userId = row.dataset.userId;
     if (!userId) return;
-    // make the typing pointer to message stream input, and focus it
-    const messageInput = document.getElementById('chat-input');
-    if (messageInput) {
-        messageInput.focus();
-        clearMessageStream(document.getElementById('message-stream'));
-        const conversationNameItem = document.getElementById('conversation-name');
-        conversationNameItem.textContent = row.querySelector('.user-row-name').textContent;
-        conversationNameItem.dataset.receiverId = userId;
-    }
+    const name = row.querySelector('.user-row-name').textContent;
+    const hasConversation = openChatWithUser({ userId, name });
+    if (hasConversation) clearSearch();   // back to the conversation list, the chat is open
 }
 
 const actionHandlers = {

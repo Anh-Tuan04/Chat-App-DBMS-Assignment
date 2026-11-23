@@ -1,6 +1,12 @@
 import { appendIncomingMessage } from './messages-stream-adapter.js';
 import { realTimeSocket } from '../real-time-socket.js';
-import { handleNewMessageComing, getConversations } from '../conversation.js';
+import {
+  handleNewMessageComing,
+  getConversations,
+  findConversationItemByReceiverId,
+  openConversation,
+  updateConversationPreview
+} from '../conversation.js';
 import { showError } from '../error.js';
 
 
@@ -44,7 +50,15 @@ const handleSubmitMessage = async (messageStream) => {
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
         if (res.status === 409) {
-          showError('You already have a conversation with this user. Open it from the list.');
+          // The list did not have it yet: reload the list, then open the existing conversation.
+          // The typed text stays in the input, so the user can send it there.
+          await getConversations();
+          const existingItem = findConversationItemByReceiverId(receiverId);
+          if (existingItem) {
+            await openConversation(existingItem);
+          } else {
+            showError('You already have a conversation with this user. Open it from the list.');
+          }
         } else {
           showError(errorData.message || errorData.error || ('Failed to create conversation (HTTP ' + res.status + ')'));
         }
@@ -118,6 +132,12 @@ const handleSubmitMessage = async (messageStream) => {
       ...payload,
       message_id: response.message_id,
       created_at: response.created_at
+    });
+    // Sidebar: your own message becomes the preview of this conversation (after the server confirmed)
+    updateConversationPreview({
+      conversationId,
+      message: text,
+      createAt: response.created_at
     });
     messageStream.scrollTop = messageStream.scrollHeight;
   } catch (error) {
