@@ -6,10 +6,11 @@ import { openChatWithUser } from './chat-area/messages.js';
    Nothing is sent while typing. Pressing Enter in the search box sends the search;
    the results replace the conversation list, and clearing the box brings it back.
    Each result row has buttons depending on `friend_status`:
-     null        -> [Add friend] [Block]
-     'requested' -> [Requested]  [Block]
-     'friend'    -> [Friends]    [Block]
-     'blocked'   -> [Unblock]      (the search API does not return 'blocked' yet; also used after a Block click)
+     null               -> [Add friend] [Block]
+     'requested'        -> [Requested]  [Block]
+     'incoming_request' -> [Accept]     [Block]
+     'friend'           -> [Friends]    [Block]
+     'blocked'          -> [Unblock]
    Requests:
      search      -> GET    /api/users/search?username={keyword}
      add friend  -> POST   /api/relationships/friend-requests?user_id={user_id}
@@ -36,11 +37,12 @@ const getInitials = (name = '') => {
 const PRIMARY_BUTTONS = {
   none: { label: 'Add friend', className: 'btn-primary', action: 'add-friend', disabled: false },
   requested: { label: 'Requested', className: 'btn-secondary', action: 'requested', disabled: true },
+  incoming_request: { label: 'Accept', className: 'btn-primary', action: 'accept-friend-request', disabled: false },
   friend: { label: 'Friends', className: 'btn-secondary', action: 'friends', disabled: true },
   blocked: { label: 'Unblock', className: 'btn-secondary', action: 'unblock', disabled: false }
 };
 
-// API value (null | 'friend' | 'requested' | 'blocked') -> key of PRIMARY_BUTTONS
+// API value (null | 'friend' | 'requested' | 'incoming_request' | 'blocked') -> key of PRIMARY_BUTTONS
 const toStatusKey = (friendStatus) => (PRIMARY_BUTTONS[friendStatus] ? friendStatus : 'none');
 
 /* ---------- 2. Create HTML ---------- */
@@ -113,7 +115,7 @@ HTML Skeleton Reference:
   <div class="btn-group">...</div>
 </div>
 */
-const createUserRow = ({ userId, username, displayName, friendStatus }) => {
+const createUserRow = ({ userId, username, displayName, friendStatus, friendRequestId }) => {
   const avatar = document.createElement('div');
   avatar.classList.add('user-row-avatar');
   avatar.textContent = getInitials(displayName);
@@ -135,6 +137,7 @@ const createUserRow = ({ userId, username, displayName, friendStatus }) => {
   row.classList.add('user-row');
   row.dataset.userId = userId;
   row.dataset.friendStatus = toStatusKey(friendStatus);
+  if (friendRequestId != null) row.dataset.friendRequestId = friendRequestId;
   row.appendChild(avatar);
   row.appendChild(info);
   row.appendChild(createUserRowActions({ friendStatus }));
@@ -161,7 +164,8 @@ const createSearchSection = ({ title, users }) => {
       userId: user.user_id,
       username: user.username,
       displayName: user.display_name,
-      friendStatus: user.friend_status
+      friendStatus: user.friend_status,
+      friendRequestId: user.friend_request_id
     }));
   });
   return section;
@@ -225,6 +229,9 @@ const renderUserResults = (users, query) => {
 // friendStatus: null | 'requested' | 'friend' | 'blocked'  (or a key of PRIMARY_BUTTONS)
 const updateUserRow = (row, friendStatus) => {
   row.dataset.friendStatus = toStatusKey(friendStatus);
+  if (row.dataset.friendStatus !== 'incoming_request') {
+    delete row.dataset.friendRequestId;
+  }
   row.querySelector('.btn-group').replaceWith(createUserRowActions({ friendStatus }));
 };
 
@@ -291,6 +298,19 @@ const handleAddFriend = (row) => changeRelationship(row, {
   nextStatus: 'requested'
 });
 
+const handleAcceptFriendRequest = (row) => {
+  const requestId = row.dataset.friendRequestId;
+  if (!requestId) {
+    showError('Friend request is missing its ID');
+    return;
+  }
+  return changeRelationship(row, {
+    method: 'POST',
+    url: '/api/relationships/friend-requests/accept?request_id=' + encodeURIComponent(requestId),
+    nextStatus: 'friend'
+  });
+};
+
 // POST {BASE_URL}/api/blocks?user_id={user_id}
 // 201: { "blocked_id": 7 }   Errors: { "message": "..." }
 // Blocking also removes an existing friendship and pending friend requests.
@@ -321,6 +341,7 @@ const handleClickUserRow = (row) => {
 
 const actionHandlers = {
   'add-friend': handleAddFriend,
+  'accept-friend-request': handleAcceptFriendRequest,
   block: handleBlock,
   unblock: handleUnblock
 };

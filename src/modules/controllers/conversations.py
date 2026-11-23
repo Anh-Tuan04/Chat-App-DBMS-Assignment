@@ -8,7 +8,7 @@ from modules.repositories.conversations import Conversation
 from modules.services.conversations import ConversationSummary
 from modules.services.container import get_services
 from utils import error_response, login_required
-from modules.real_time_socket.extensions import socketio
+from ..real_time_socket.extensions import socketio
 
 log = logging.getLogger(__name__)
 

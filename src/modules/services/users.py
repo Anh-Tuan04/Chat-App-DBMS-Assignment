@@ -44,6 +44,7 @@ class UserService:
             result: list[dict[str, Any]] = []
             for u in summaries:
                 friend_status = None
+                friend_request_id = None
                 if current_user_id is not None:
                     if u.user_id == current_user_id:
                         continue
@@ -54,11 +55,21 @@ class UserService:
                             continue
                         if self._relationships.are_friends(current_user_id, u.user_id):
                             friend_status = "friend"
-                        elif self._relationships.find_pending_request(
-                            requester_id=current_user_id,
-                            addressee_id=u.user_id,
-                        ) is not None:
-                            friend_status = "requested"
+                        else:
+                            outgoing_request = self._relationships.find_pending_request(
+                                requester_id=current_user_id,
+                                addressee_id=u.user_id,
+                            )
+                            if outgoing_request is not None:
+                                friend_status = "requested"
+                            else:
+                                incoming_request = self._relationships.find_pending_request(
+                                    requester_id=u.user_id,
+                                    addressee_id=current_user_id,
+                                )
+                                if incoming_request is not None:
+                                    friend_status = "incoming_request"
+                                    friend_request_id = incoming_request.request_id
 
                 result.append(
                     {
@@ -67,6 +78,7 @@ class UserService:
                         "display_name": u.display_name or u.username,
                         "avatar_url": u.avatar_url,
                         "friend_status": friend_status,
+                        "friend_request_id": friend_request_id,
                     }
                 )
             return result, None
