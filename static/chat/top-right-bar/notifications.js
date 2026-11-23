@@ -1,5 +1,5 @@
 import { realTimeSocket } from '../real-time-socket.js';
-import { getConversations } from '../conversation.js';
+import { addConversationItem } from '../conversation.js';
 import { showError } from '../error.js';
 import { showToast } from '../toast.js';
 
@@ -30,15 +30,15 @@ let isLoadingNotifications = false;
 const NOTIFICATION_TYPES = {
   friend_request: {
     icon: 'person_add',
-    text: (name) => name + ' sent you a friend request'
+    text: (name) => '"' + name + '" sent you a friend request'
   },
   friend_accepted: {
     icon: 'how_to_reg',
-    text: (name) => name + ' accepted your friend request'
+    text: (name) => '"' + name + '" accepted your friend request'
   },
   group_added: {
     icon: 'group_add',
-    text: (name, payload) => name + ' added you to ' + (payload.group_name || 'a group')
+    text: (name, payload) => name + ' added you to "' + (payload.group_name || 'a group') + '"'
   }
 };
 
@@ -356,8 +356,18 @@ realTimeSocket.on('receive_notification', (item) => {
   if (!notificationsModal.hidden) renderNotifications();
   showToast(view.message);
 
-  // Added to a group: the new conversation must appear in the sidebar
-  if (item.notification_type === 'group_added') getConversations();
+  // Added to a group: draw the group's sidebar row from the payload (no list fetch)
+  if (item.notification_type === 'group_added' && item.payload?.conversation_id) {
+    addConversationItem({
+      conversation_id: item.payload.conversation_id,
+      conversation_type: 'group',
+      receiver_id: null,
+      display_name: item.payload.group_name || 'Group',
+      conversation_img_url: null,
+      latest_message: null,
+      unread_count: 0
+    });
+  }
 });
 
 // After a lost connection, notifications may have arrived in between

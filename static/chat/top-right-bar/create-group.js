@@ -1,4 +1,4 @@
-import { getConversations } from '../conversation.js';
+import { addConversationItem } from '../conversation.js';
 import { showError } from '../error.js';
 import { showToast } from '../toast.js';
 import { searchUsers } from './user-search.js';
@@ -24,11 +24,20 @@ function getInitials(name = '') {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-function renderHint(container, text) {
+/*
+HTML Skeleton Reference:
+<p class="modal-hint">Search for users to add to the group.</p>
+*/
+function createHint(text) {
     const hint = document.createElement('p');
     hint.classList.add('modal-hint');
     hint.textContent = text;
-    container.replaceChildren(hint);
+    return hint;
+}
+
+// Replaces everything in `container` (#group-members) with one hint
+function renderHint(container, text) {
+    container.replaceChildren(createHint(text));
 }
 
 function updateCreateButton() {
@@ -37,23 +46,48 @@ function updateCreateButton() {
     createGroupButton.disabled = isSubmitting || !hasName || !hasMembers;
 }
 
+/*
+HTML Skeleton Reference (one per selected member, inside #selected-group-members;
+a click removes the member, see the listener on selectedMembersList):
+<button class="btn btn-secondary selected-member-chip" type="button"
+        data-user-id="7" aria-label="Remove Jane Doe">Jane Doe ×</button>
+*/
+function createSelectedMemberChip(user) {
+    const name = user.display_name || user.username;
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.classList.add('btn', 'btn-secondary', 'selected-member-chip');
+    chip.dataset.userId = String(user.user_id);
+    chip.textContent = `${name} ×`;
+    chip.setAttribute('aria-label', `Remove ${name}`);
+    return chip;
+}
+
+/*
+HTML Skeleton Reference (content of #selected-group-members):
+<button class="btn btn-secondary selected-member-chip" ...>Jane Doe ×</button>
+<button class="btn btn-secondary selected-member-chip" ...>Mike ×</button>
+*/
 function renderSelectedMembers() {
     memberCount.textContent = String(selectedMembers.size);
-    selectedMembersList.replaceChildren();
-
-    selectedMembers.forEach((user) => {
-        const chip = document.createElement('button');
-        chip.type = 'button';
-        chip.classList.add('btn', 'btn-secondary', 'selected-member-chip');
-        chip.dataset.userId = String(user.user_id);
-        chip.textContent = `${user.display_name || user.username} ×`;
-        chip.setAttribute('aria-label', `Remove ${user.display_name || user.username}`);
-        selectedMembersList.appendChild(chip);
-    });
-
+    selectedMembersList.replaceChildren(
+        ...Array.from(selectedMembers.values(), createSelectedMemberChip)
+    );
     updateCreateButton();
 }
 
+/*
+HTML Skeleton Reference (one per search result, inside #group-members):
+<label class="user-row member-row">
+  <div class="user-row-avatar">JD</div>
+  <div class="user-row-info">
+    <span class="user-row-name">Jane Doe</span>
+    <span class="user-row-sub">@jane_doe</span>
+  </div>
+  <input type="checkbox" aria-label="Add Jane Doe to the group" [checked] [disabled] />
+         <!-- disabled when not checked and 99 members are already selected -->
+</label>
+*/
 function createMemberRow(user) {
     const name = user.display_name || user.username;
     const row = document.createElement('label');
@@ -96,6 +130,12 @@ function createMemberRow(user) {
 
 let currentSearchResults = [];
 
+/*
+HTML Skeleton Reference (content of #group-members):
+<label class="user-row member-row">...</label>   <!-- one per user, see createMemberRow -->
+   or, when there are no results:
+<p class="modal-hint">No users found.</p>
+*/
 function renderUsers(users) {
     userList.replaceChildren();
     if (!users.length) {
@@ -187,7 +227,18 @@ createGroupButton.addEventListener('click', async () => {
 
         groupModal.hidden = true;
         showToast('Group created');
-        await getConversations();
+        // 201: { conversation_id, conversation_type, receiver_id, receiver_display_name, conversation_img_url }
+        // Draw the new group's row from the response (no list fetch). The members get it
+        // through their 'group_added' notification.
+        addConversationItem({
+            conversation_id: body.conversation_id,
+            conversation_type: body.conversation_type || 'group',
+            receiver_id: null,
+            display_name: body.receiver_display_name || groupName,
+            conversation_img_url: body.conversation_img_url,
+            latest_message: null,
+            unread_count: 0
+        });
     } catch (error) {
         showError(error?.message || 'Could not create group');
     } finally {

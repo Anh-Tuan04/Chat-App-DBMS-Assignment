@@ -12,6 +12,7 @@ import {
   getConversations,
   findConversationItemByReceiverId,
   updateConversationPreview,
+  addConversationItem,
   setActiveConversationItem,
   clearConversationUnread,
   getConversationName
@@ -298,14 +299,20 @@ const handleSubmitMessage = async (messageStream) => {
       });
       messageStream.scrollTop = messageStream.scrollHeight;
 
-      // Success: clear the input, forget the receiver, show the new conversation in the sidebar
+      // Success: clear the input, forget the receiver, add the new conversation's row to the sidebar
+      // from the response (same fields as GET /api/conversations, no list fetch)
       chatInput.value = '';
       delete document.getElementById('conversation-name').dataset.receiverId;
-      await getConversations();
-      const newItem = document.querySelector(
-        `.conversation-item[data-conversation-id="${data.conversation_id}"]`
-      );
-      if (newItem) newItem.classList.add('is-active');
+      const newItem = addConversationItem({
+        conversation_id: data.conversation_id,
+        conversation_type: data.conversation_type,
+        receiver_id: data.receiver_id,
+        display_name: data.receiver_display_name,
+        conversation_img_url: data.conversation_img_url,
+        latest_message: { content: data.message_info.content, created_at: data.message_info.created_at },
+        unread_count: 0
+      });
+      setActiveConversationItem(newItem);
     } catch (error) {
       showError(error.message || 'Failed to create the conversation');
     }
@@ -351,23 +358,35 @@ realTimeSocket.on('receive_message', async (payload) => {
     String(payload.sender_info?.user_id) === String(currentUser.user_id);
   const preview = { conversationId, message: payload.message, createAt: payload.created_at };
 
+  // Our own message, or the open conversation: the row is updated, or drawn from
+  // payload.conversation when this client does not have it yet. Never unread.
+  const showWithoutUnread = () => {
+    if (updateConversationPreview(preview) || !payload.conversation) return;
+    addConversationItem({
+      ...payload.conversation,
+      latest_message: { content: payload.message, created_at: payload.created_at },
+      unread_count: 0
+    });
+  };
+
   // The open conversation: show it in the stream AND update its sidebar preview
   if (conversationId === messageStreamElement.dataset.conversationId) {
     appendIncomingMessage(messageStreamElement, payload);
     if (isOwn) messageStreamElement.scrollTop = messageStreamElement.scrollHeight;
-    if (!updateConversationPreview(preview)) await getConversations();
+    showWithoutUnread();
     if (!isOwn) scheduleMarkRead();   // the user is looking at it: save "read up to this message"
     return;
   }
 
-  // Another conversation, our own message (sent from another tab): preview only, never unread
+  // Another conversation, our own message (sent from another tab): preview only
   if (isOwn) {
-    if (!updateConversationPreview(preview)) await getConversations();
+    showWithoutUnread();
     return;
   }
 
   // Another conversation, from someone else: preview, time, bold, unread badge
-  await handleNewMessageComing(preview);
+  // (a conversation new to this client gets its row from payload.conversation)
+  await handleNewMessageComing({ ...preview, conversation: payload.conversation });
 });
 
 // The server refused a message: show why, and give the text back if the composer is still empty

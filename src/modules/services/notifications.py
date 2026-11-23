@@ -18,6 +18,9 @@ log = logging.getLogger(__name__)
 
 
 class NotificationService:
+    # Notification.type stored in the DB -> notification_type sent to clients (when they differ)
+    API_TYPE_NAMES = {NotificationType.ADDED_TO_GROUP: "group_added"}
+
     def __init__(
         self,
         notifications: NotificationRepository,
@@ -234,7 +237,9 @@ class NotificationService:
                 result.append(
                     {
                         "notification_id": str(item.notification_id),
-                        "notification_type": item.type,
+                        # The DB stores "added_to_group"; the API contract (get-notification-api.md)
+                        # and the frontend use "group_added".
+                        "notification_type": self.API_TYPE_NAMES.get(item.type, item.type),
                         "is_read": item.is_read,
                         "created_at": self._format_utc_iso(item.created_at),
                         "payload": payload,

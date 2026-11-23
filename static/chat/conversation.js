@@ -194,18 +194,7 @@ function renderConversations(conversations) {
     }
 
     conversations.forEach(conversation => {
-        const conversationItem = createConversationItem({
-            id: String(conversation.conversation_id),
-            avatarUrl: conversation.conversation_img_url,
-            initials: initials(conversation.display_name),
-            isGroup: conversation.conversation_type === 'group',
-            receiverId: conversation.receiver_id,
-            unreadCount: Number(conversation.unread_count) || 0,
-            name: conversation.display_name,
-            time: formatConversationTime(conversation.latest_message?.created_at),
-            preview: conversation.latest_message?.content ||
-                (conversation.conversation_type === 'group' ? 'Group conversation' : 'No messages yet')
-        });
+        const conversationItem = createConversationItem(toConversationItemInput(conversation));
         if (conversationItem) {
             if (conversationItem.dataset.conversationId === activeConversationId) {
                 conversationItem.classList.add('is-active');
@@ -213,6 +202,42 @@ function renderConversations(conversations) {
             conversationList.appendChild(conversationItem);
         }
     });
+}
+
+// One item of GET /api/conversations (or the `conversation` of a socket payload) -> createConversationItem() input
+const toConversationItemInput = (conversation) => ({
+    id: String(conversation.conversation_id),
+    avatarUrl: conversation.conversation_img_url,
+    initials: initials(conversation.display_name),
+    isGroup: conversation.conversation_type === 'group',
+    receiverId: conversation.receiver_id,
+    unreadCount: Number(conversation.unread_count) || 0,
+    name: conversation.display_name,
+    time: formatConversationTime(conversation.latest_message?.created_at),
+    preview: conversation.latest_message?.content ||
+        (conversation.conversation_type === 'group' ? 'Group conversation' : 'No messages yet')
+});
+
+const findConversationItem = (conversationId) =>
+    conversationList.querySelector(
+        '.conversation-item[data-conversation-id="' + CSS.escape(String(conversationId)) + '"]'
+    );
+
+// Adds ONE row at the top of the list, without fetching the list again.
+// conversation: { conversation_id, conversation_type, receiver_id, display_name,
+//                 conversation_img_url, [latest_message: { content, created_at }], [unread_count] }
+// (same shape as GET /api/conversations; socket payloads carry it as `conversation`)
+// Returns the row. If the row exists already, nothing is added and that row is returned.
+export function addConversationItem(conversation) {
+    const existingItem = findConversationItem(conversation.conversation_id);
+    if (existingItem) return existingItem;
+
+    const conversationItem = createConversationItem(toConversationItemInput(conversation));
+    if (!conversationItem) return null;
+
+    conversationList.querySelector('.conversation-empty')?.remove();   // "No conversations yet."
+    conversationList.prepend(conversationItem);
+    return conversationItem;
 }
 
 
@@ -234,16 +259,25 @@ export function updateConversationPreview({ conversationId, message, createAt })
 
 // A message from someone else for a conversation that is not open:
 // update the row, make it bold and add 1 to its unread badge.
-export async function handleNewMessageComing({ conversationId, message, createAt }) {
+// conversation: the `conversation` of the socket payload, used to draw the row when the
+// conversation is new to this client (first message of a direct chat, a new group).
+export async function handleNewMessageComing({ conversationId, message, createAt, conversation }) {
     const isUpdated = updateConversationPreview({ conversationId, message, createAt });
     if (!isUpdated) {
-        await getConversations();  // new conversation: fetch and render the conversation list again
+        if (!conversation) {
+            await getConversations();   // old server payload without `conversation`: only way left
+            return;
+        }
+        // New conversation: draw its row from the payload, already bold with 1 unread
+        addConversationItem({
+            ...conversation,
+            latest_message: { content: message, created_at: createAt },
+            unread_count: 1
+        });
         return;
     }
 
-    const item = conversationList.querySelector(
-        '.conversation-item[data-conversation-id="' + CSS.escape(conversationId) + '"]'
-    );
+    const item = findConversationItem(conversationId);
     item.classList.add('has-unread');
 
     let unreadBadge = item.querySelector('.unread-badge');

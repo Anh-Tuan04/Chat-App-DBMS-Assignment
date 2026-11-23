@@ -1,6 +1,7 @@
 from flask import session
 from flask_socketio import emit
 from ..extensions import socketio
+from ..emitters.conversations import build_conversation_views, emit_message_to_members
 from modules.services.container import get_services
 
 
@@ -38,7 +39,14 @@ def on_message(data):
         "conversation_id": "3",
         "message": "Hello",
         "message_id": "1354263578912345678",
-        "created_at": "2026-11-19T05:20:00Z"
+        "created_at": "2026-11-19T05:20:00Z",
+        "conversation": {                     # the sidebar row as THIS receiver sees it
+            "conversation_id": "3",
+            "conversation_type": "direct",    # or "group"
+            "receiver_id": 7,                 # the other person (direct), null (group)
+            "display_name": "Jane Doe",       # the other person's name, or the group name
+            "conversation_img_url": null
+        }
     }
 
     send_message_error (sent only to the sending socket):
@@ -63,17 +71,6 @@ def on_message(data):
     except (TypeError, ValueError):
         return _emit_error('conversation_id must be an integer', data)
 
-    client_info = data.get('sender_info')
-    if not isinstance(client_info, dict):
-        client_info = {}
-    username = client_info.get('username') or ''
-    sender_info = {
-        'user_id': user_id,
-        'username': username,
-        'display_name': client_info.get('display_name') or username or f'User {user_id}',
-        'avatar_url': client_info.get('avatar_url'),
-    }
-
     services = get_services()
 
     conversation, err = services.conversations.get_for_member(conversation_id, user_id)
@@ -97,6 +94,21 @@ def on_message(data):
     if err or message is None:
         return _emit_error(err or 'Internal server error', data)
 
+    # Names and avatars come from the database, not from the client. Needed for the sender_info
+    # and, in a direct chat, for the other person's row (build_conversation_views).
+    profiles, _ = services.users.get_public_profiles(member_ids)
+    profiles = profiles or {}
+
+    client_info = data.get('sender_info') if isinstance(data.get('sender_info'), dict) else {}
+    sender = profiles.get(int(user_id)) or {}
+    username = sender.get('username') or client_info.get('username') or ''
+    sender_info = {
+        'user_id': user_id,
+        'username': username,
+        'display_name': sender.get('display_name') or client_info.get('display_name') or username or f'User {user_id}',
+        'avatar_url': sender.get('avatar_url', client_info.get('avatar_url')),
+    }
+
     outgoing = {
         'sender_info': sender_info,
         'conversation_id': str(conversation_id),
@@ -104,8 +116,11 @@ def on_message(data):
         'message_id': str(message.message_id),   # must be string
         'created_at': _iso(message.created_at),  # must be string
     }
-
-    # Rooms are named "user:{id}" in events/connection.py
-    for member_id in member_ids:
-        socketio.emit('receive_message', outgoing, room=f"user:{member_id}")
-    print(f"User {user_id} sent to conversation {conversation_id} ({conversation.type}) message \"{text}\"")
+    try:
+        member_ids.remove(int(user_id)) # ignore print sender in receiver array
+    except ValueError:
+        pass
+    # Each member gets the message plus the sidebar row as they see it
+    emit_message_to_members(outgoing, build_conversation_views(conversation, member_ids, profiles))
+    members = str(member_ids) if len(member_ids) <= 10 else str(member_ids[:10]) + '...'
+    print(f"User {user_id} sent to {members} message \"{text}\"")

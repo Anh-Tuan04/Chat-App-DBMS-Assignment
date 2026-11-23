@@ -8,7 +8,7 @@ from modules.repositories.conversations import Conversation
 from modules.services.conversations import ConversationSummary
 from modules.services.container import get_services
 from utils import error_response, login_required
-from ..real_time_socket.extensions import socketio
+from ..real_time_socket.emitters.conversations import build_conversation_views, emit_message_to_members
 
 log = logging.getLogger(__name__)
 
@@ -162,28 +162,35 @@ def create_conversation():
     summary = started.conversation
     msg = started.message
     created_at_iso = _format_utc_iso(msg.created_at)
-    sender_display_name = (
-        get_services().users.get_display_names([user_id]).get(user_id) or str(msg.sender_id)
-    )
+    profiles, _ = get_services().users.get_public_profiles([user_id, friend_id])
+    profiles = profiles or {}
+    sender = profiles.get(user_id) or {}
+    sender_display_name = sender.get("display_name") or str(msg.sender_id)
 
     socket_payload = {
         "sender_info": {
             "user_id": msg.sender_id,
-            "username": getattr(msg, "sender_username", None) or "",
+            "username": sender.get("username") or "",
             "display_name": sender_display_name,
-            "avatar_url": getattr(msg, "sender_avatar_url", None),
+            "avatar_url": sender.get("avatar_url"),
         },
-        "conversation_id": summary.conversation_id,
+        "conversation_id": str(summary.conversation_id),
         "message": msg.content,
         "message_type": "text",
         "message_id": str(msg.message_id),
         "created_at": created_at_iso,
     }
 
-    socketio.emit(
-        "receive_message",
-        socket_payload,
-        room=f"user:{friend_id}",
+    # Only the friend gets the event (this tab draws the message from the HTTP response).
+    # The `conversation` view lets the friend's client add the new sidebar row by itself.
+    conversation = Conversation(
+        conversation_id=summary.conversation_id,
+        type="direct",
+        direct_user_a=user_id,
+        direct_user_b=friend_id,
+    )
+    emit_message_to_members(
+        socket_payload, build_conversation_views(conversation, [friend_id], profiles)
     )
     return jsonify(
         {
