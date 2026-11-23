@@ -1,13 +1,26 @@
-import { appendIncomingMessage } from './messages-stream-adapter.js';
+import {
+  appendIncomingMessage,
+  renderMessageHistory,
+  getOldestMessageId,
+  prependOlderMessages
+} from './messages-stream-adapter.js';
+import { createNewMessageStream, clearMessageStream } from './messages-stream.js';
 import { realTimeSocket } from '../real-time-socket.js';
 import {
+  conversationList,
   handleNewMessageComing,
   getConversations,
   findConversationItemByReceiverId,
-  openConversation,
-  updateConversationPreview
+  updateConversationPreview,
+  setActiveConversationItem,
+  clearConversationUnread,
+  getConversationName
 } from '../conversation.js';
 import { showError } from '../error.js';
+
+/* The open chat: opening a conversation, the first page, older pages (scroll up), marking
+   read, sending and receiving. The sidebar list itself is in ../conversation.js, which
+   never imports this file. */
 
 
 
@@ -19,6 +32,210 @@ const sendButton = document.getElementById('send-btn');
 export const messageStreamElement = document.getElementById('message-stream');
 
 const ACK_TIMEOUT_MS = 5000;
+
+const MESSAGES_PAGE_LIMIT = 30;
+
+// Sends "read up to this message" for a conversation. lastMessageId: the newest message the user has seen.
+// Returns true when the server confirmed. Errors are shown, never thrown.
+const markConversationRead = async (conversationId, lastMessageId) => {
+    if (!realTimeSocket.connected) return false;
+    try {
+        const response = await realTimeSocket
+            .timeout(ACK_TIMEOUT_MS)
+            .emitWithAck('mark_read', {
+                conversation_id: conversationId,
+                last_message_id: lastMessageId
+            });
+
+        if (response.status !== 'success') {
+            showError(response.message);
+            return false;
+        }
+        return true;
+    } catch (error) {
+        showError('The server did not respond. Could not mark the conversation as read.');
+        return false;
+    }
+};
+
+// ---------- Older messages (scroll up) ----------
+const OLDER_SCROLL_THRESHOLD_PX = 120;   // start loading when the top is this close
+let isLoadingOlder = false;
+let hasOlderMessages = true;             // false once a page has fewer items than the limit
+let olderRequestId = 0;                  // a new conversation invalidates the running request
+
+const resetOlderMessages = () => {
+    olderRequestId += 1;
+    isLoadingOlder = false;
+    hasOlderMessages = true;
+};
+
+// GET /api/messages?conversation_id=..&before=<oldest id on screen>&limit=..
+const loadOlderMessages = async () => {
+    const conversationId = messageStreamElement.dataset.conversationId;
+    if (!conversationId || isLoadingOlder || !hasOlderMessages) return;
+
+    const oldestMessageId = getOldestMessageId(messageStreamElement);
+    if (!oldestMessageId) return;
+
+    isLoadingOlder = true;
+    const requestId = olderRequestId;
+    try {
+        const response = await fetch(
+            '/api/messages?conversation_id=' + encodeURIComponent(conversationId) +
+            '&before=' + encodeURIComponent(oldestMessageId) +
+            '&limit=' + MESSAGES_PAGE_LIMIT,
+            { method: 'GET', credentials: 'include' }
+        );
+        const body = await response.json();
+
+        if (requestId !== olderRequestId) return;   // another conversation was opened meanwhile
+        if (!response.ok) {
+            showError(body.message);
+            return;
+        }
+        if (!Array.isArray(body)) {
+            showError('Invalid messages response');
+            return;
+        }
+
+        if (body.length < MESSAGES_PAGE_LIMIT) hasOlderMessages = false;   // nothing older left
+        prependOlderMessages(messageStreamElement, body);
+    } catch (error) {
+        if (requestId === olderRequestId) showError('Failed to load older messages');
+    } finally {
+        if (requestId === olderRequestId) isLoadingOlder = false;
+    }
+
+    // The page did not fill the panel, so the user cannot scroll to trigger the next one
+    if (requestId === olderRequestId) loadOlderMessagesIfNotScrollable();
+};
+
+const loadOlderMessagesIfNotScrollable = () => {
+    if (hasOlderMessages && messageStreamElement.scrollHeight <= messageStreamElement.clientHeight) {
+        loadOlderMessages();
+    }
+};
+
+// One scroll listener for the stream
+messageStreamElement.addEventListener('scroll', () => {
+    if (messageStreamElement.scrollTop <= OLDER_SCROLL_THRESHOLD_PX) loadOlderMessages();
+});
+
+// Id of the newest message on screen (messages are in the stream oldest first), or null if empty
+const getNewestMessageId = () => {
+    const messages = messageStreamElement.querySelectorAll('.message');
+    return messages.length ? messages[messages.length - 1].dataset.messageId : null;
+};
+
+// Marks the OPEN conversation as read up to the newest message on screen,
+// then removes the bold state and the badge of its sidebar row.
+const markOpenConversationRead = async () => {
+    const conversationId = messageStreamElement.dataset.conversationId;
+    const newestMessageId = getNewestMessageId();
+    if (!conversationId || !newestMessageId) return;   // nothing seen yet, nothing to mark
+
+    const isMarkedRead = await markConversationRead(conversationId, newestMessageId);
+    if (!isMarkedRead) return;
+
+    clearConversationUnread(conversationId);
+};
+
+// Called when the user has seen new messages of the open conversation. Waits a short moment so
+// several messages in a row make one request; while the tab is hidden it waits until the tab is visible.
+let markReadTimer = null;
+let hasPendingRead = false;
+export const scheduleMarkRead = (delayMs = 300) => {
+    clearTimeout(markReadTimer);
+    markReadTimer = setTimeout(() => {
+        if (document.hidden) {
+            hasPendingRead = true;
+            return;
+        }
+        markOpenConversationRead();
+    }, delayMs);
+};
+
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden || !hasPendingRead) return;
+    hasPendingRead = false;
+    markOpenConversationRead();
+});
+
+// Opens a conversation of the sidebar: new stream, highlight, mark read, load the first page.
+// conversationItem: a `.conversation-item` element of #conversation-list
+export const openConversation = async (conversationItem) => {
+    const conversationId = conversationItem.dataset.conversationId;
+    if (messageStreamElement.dataset.conversationId === conversationId) return;   // already open
+
+    // 1. Empty the stream; it now belongs to this conversation
+    createNewMessageStream(messageStreamElement, conversationId);
+    resetOlderMessages();
+
+    // A conversation is open now: forget a receiver picked for a new chat
+    delete document.getElementById('conversation-name').dataset.receiverId;
+
+    // Sidebar: highlight this item at once
+    setActiveConversationItem(conversationItem);
+
+    // 2. Request the first page (no `before`)
+    try {
+        const response = await fetch(
+            '/api/messages?conversation_id=' + encodeURIComponent(conversationId) +
+            '&limit=' + MESSAGES_PAGE_LIMIT,
+            { method: 'GET', credentials: 'include' }
+        );
+        const body = await response.json();
+
+        if (!response.ok) {
+            showError(body.message);
+            return;
+        }
+
+        if (messageStreamElement.dataset.conversationId !== conversationId) return;
+
+        // 3. Fill the stream
+        renderMessageHistory(messageStreamElement, body);
+        hasOlderMessages = body.length >= MESSAGES_PAGE_LIMIT;   // a short first page is the whole history
+        loadOlderMessagesIfNotScrollable();
+
+        // 4. Mark as read up to the newest message now on screen (after rendering, not before)
+        scheduleMarkRead(0);
+
+        document.getElementById('conversation-name').textContent = getConversationName(conversationItem);
+        document.getElementById('chat-input').focus();
+    } catch (error) {
+        showError('Failed to load messages');
+    }
+};
+
+// A user was picked (sidebar search row, friends modal). No request is sent:
+//   - the sidebar already has a conversation with this user -> open it, return true
+//   - otherwise -> empty composer ready for a NEW chat (the first message creates the
+//     conversation, see messages.js), return false
+export const openChatWithUser = ({ userId, name }) => {
+    const existingItem = findConversationItemByReceiverId(userId);
+    if (existingItem) {
+        openConversation(existingItem);
+        return true;
+    }
+
+    clearMessageStream(messageStreamElement);
+    resetOlderMessages();
+    setActiveConversationItem(null);
+
+    const conversationName = document.getElementById('conversation-name');
+    conversationName.textContent = name;
+    conversationName.dataset.receiverId = String(userId);
+    document.getElementById('chat-input').focus();
+    return false;
+};
+
+// One click listener for the whole list: the row says which conversation via data-conversation-id
+conversationList.addEventListener('click', (event) => {
+    const conversationItem = event.target.closest('.conversation-item');
+    if (conversationItem) openConversation(conversationItem);
+});
 
 const handleSubmitMessage = async (messageStream) => {
   const text = chatInput.value.trim();
@@ -160,6 +377,7 @@ realTimeSocket.on('receive_message', async (payload) => {
 
   if (String(payload.conversation_id) === openConversationId) {
     appendIncomingMessage(messageStreamElement, payload);
+    scheduleMarkRead();   // the user is looking at it: save "read up to this message"
     return;
   }
 

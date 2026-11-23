@@ -1,5 +1,6 @@
 import { showError } from './error.js';
-import { conversationList, openChatWithUser } from './conversation.js';
+import { conversationList } from './conversation.js';
+import { openChatWithUser } from './chat-area/messages.js';
 
 /* Sidebar search (users only for now).
    Nothing is sent while typing. Pressing Enter in the search box sends the search;

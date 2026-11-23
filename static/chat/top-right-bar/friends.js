@@ -1,6 +1,6 @@
 import { showError } from '../error.js';
 import { showToast } from '../toast.js';
-import { openChatWithUser } from '../conversation.js';
+import { openChatWithUser } from '../chat-area/messages.js';
 
 /*
 <!-- ===== Modal: Friends List ===== -->

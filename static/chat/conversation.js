@@ -1,7 +1,8 @@
-import { realTimeSocket } from "./real-time-socket.js";
-import { createNewMessageStream, clearMessageStream } from './chat-area/messages-stream.js';
-import { renderMessageHistory } from './chat-area/messages-stream-adapter.js';
 import { showError } from "./error.js"
+
+/* The sidebar conversation list ONLY: rows, rendering, preview, unread badge.
+   Opening a conversation, loading messages, scrolling and marking read are in
+   chat-area/messages.js, which imports from this file (never the other way round). */
 
 /*
 <div class="conversation-item [is-active]" data-conversation-id="c1">
@@ -277,30 +278,6 @@ export async function getConversations() {
     }
 }
 
-const messageStreamElement = document.getElementById('message-stream');
-const MESSAGES_PAGE_LIMIT = 30;
-
-const ACK_TIMEOUT_MS = 5000;
-
-// Returns true when the server confirmed. Errors are shown, never thrown.
-const markConversationRead = async (conversationId) => {
-    if (!realTimeSocket.connected) return false;
-    try {
-        const response = await realTimeSocket
-            .timeout(ACK_TIMEOUT_MS)
-            .emitWithAck('mark_read', { conversation_id: conversationId });
-
-        if (response.status !== 'success') {
-            showError(response.message);
-            return false;
-        }
-        return true;
-    } catch (error) {
-        showError('The server did not respond. Could not mark the conversation as read.');
-        return false;
-    }
-};
-
 /*
 Sidebar row of the direct conversation with a user, or null.
 HTML Skeleton Reference (what is matched):
@@ -311,87 +288,27 @@ export const findConversationItemByReceiverId = (userId) =>
         '.conversation-item[data-receiver-id="' + CSS.escape(String(userId)) + '"]'
     );
 
-// Opens a conversation of the sidebar: new stream, highlight, mark read, load the first page.
-// conversationItem: a `.conversation-item` element of #conversation-list
-export const openConversation = async (conversationItem) => {
-    const conversationId = conversationItem.dataset.conversationId;
-    if (messageStreamElement.dataset.conversationId === conversationId) return;   // already open
-
-    // 1. Empty the stream; it now belongs to this conversation
-    createNewMessageStream(messageStreamElement, conversationId);
-
-    // A conversation is open now: forget a receiver picked for a new chat
-    delete document.getElementById('conversation-name').dataset.receiverId;
-
-    // Sidebar: highlight this item at once
+// Highlights one row. item = null removes the highlight from every row.
+export const setActiveConversationItem = (item) => {
     const previousItem = conversationList.querySelector('.conversation-item.is-active');
-    if (previousItem) previousItem.classList.remove('is-active');
-    conversationItem.classList.add('is-active');
-
-    // 2. Mark as read in parallel: do not make the messages wait for the ack
-    markConversationRead(conversationId).then((isMarkedRead) => {
-        if (!isMarkedRead) return;
-        conversationItem.classList.remove('has-unread');
-        const unreadBadge = conversationItem.querySelector('.unread-badge');
-        if (unreadBadge) unreadBadge.remove();
-    });
-
-    // 3. Request the first page (no `before`)
-    try {
-        const response = await fetch(
-            '/api/messages?conversation_id=' + encodeURIComponent(conversationId) +
-            '&limit=' + MESSAGES_PAGE_LIMIT,
-            { method: 'GET', credentials: 'include' }
-        );
-        const body = await response.json();
-
-        if (!response.ok) {
-            showError(body.message);
-            return;
-        }
-
-        if (messageStreamElement.dataset.conversationId !== conversationId) return;
-
-        // 4. Fill the stream
-        renderMessageHistory(messageStreamElement, body);
-
-        document.getElementById('conversation-name').textContent = conversationItem.querySelector('.conversation-name').textContent;
-        document.getElementById('chat-input').focus();
-    } catch (error) {
-        showError('Failed to load messages');
-    }
+    if (previousItem && previousItem !== item) previousItem.classList.remove('is-active');
+    if (item) item.classList.add('is-active');
 };
 
-// A user was picked (sidebar search row, friends modal). No request is sent:
-//   - the sidebar already has a conversation with this user -> open it, return true
-//   - otherwise -> empty composer ready for a NEW chat (the first message creates the
-//     conversation, see messages.js), return false
-export const openChatWithUser = ({ userId, name }) => {
-    const existingItem = findConversationItemByReceiverId(userId);
-    if (existingItem) {
-        openConversation(existingItem);
-        return true;
-    }
-
-    clearMessageStream(messageStreamElement);
-    const previousItem = conversationList.querySelector('.conversation-item.is-active');
-    if (previousItem) previousItem.classList.remove('is-active');
-
-    const conversationName = document.getElementById('conversation-name');
-    conversationName.textContent = name;
-    conversationName.dataset.receiverId = String(userId);
-    document.getElementById('chat-input').focus();
-    return false;
+// The conversation was read: remove the bold state and the unread badge of its row
+export const clearConversationUnread = (conversationId) => {
+    const item = conversationList.querySelector(
+        '.conversation-item[data-conversation-id="' + CSS.escape(String(conversationId)) + '"]'
+    );
+    if (!item) return;
+    item.classList.remove('has-unread');
+    const unreadBadge = item.querySelector('.unread-badge');
+    if (unreadBadge) unreadBadge.remove();
 };
 
-// One click listener for the whole list: the row says which conversation via data-conversation-id
-conversationList.addEventListener('click', (event) => {
-    const conversationItem = event.target.closest('.conversation-item');
-    if (conversationItem) openConversation(conversationItem);
-});
-
-
-
+// Name shown in a row (used as the chat title)
+export const getConversationName = (item) =>
+    item.querySelector('.conversation-name').textContent;
 
 /*
 ### Endpoint
