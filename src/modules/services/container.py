@@ -57,7 +57,12 @@ def _create_services(session: Any, cluster: Any = None) -> BackendServices:
         SnowflakeIdGenerator(),
     )
 
-    notifications = NotificationService(notifications_repository)
+    notifications = NotificationService(
+        notifications_repository,
+        relationships_repository,
+        users_repository,
+        conversations_repository,
+    )
     conversations = ConversationService(
         conversations_repository,
         users_repository,
@@ -69,7 +74,9 @@ def _create_services(session: Any, cluster: Any = None) -> BackendServices:
     return BackendServices(
         auth=AuthService(auth_repository, users_table),
         users=UserService(users_repository, relationships_repository),
-        relationships=RelationshipService(relationships_repository, users_repository),
+        relationships=RelationshipService(
+            relationships_repository, users_repository, notifications
+        ),
         notifications=notifications,
         conversations=conversations,
         messages=MessageService(

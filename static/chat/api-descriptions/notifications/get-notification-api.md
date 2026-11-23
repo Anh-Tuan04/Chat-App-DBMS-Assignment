@@ -77,7 +77,8 @@ The body is an array, newest notification first. It is `[]` if there are no noti
         "username": "jane_doe",
         "display_name": "Jane Doe",
         "avatar_url": "https://example.com/avatars/jane.png"
-      }
+      },
+      "request_id": 56
     }
   },
   {
@@ -129,23 +130,26 @@ These fields are the same for every type.
 
 | `notification_type` | Meaning | `payload` fields |
 |---------------------|---------|------------------|
-| `friend_request` | Someone sent the logged-in user a friend request | `actor` |
+| `friend_request` | Someone sent the logged-in user a friend request | `actor`, `request_id` |
 | `friend_accepted` | Someone accepted the logged-in user's friend request | `actor` |
 | `group_added` | The logged-in user was added to a group | `actor`, `conversation_id`, `group_name` |
 
 | `payload` field | Type | Description |
 |-----------------|------|-------------|
 | `actor` | object | The user who caused the notification: the sender for `friend_request`, the user who accepted for `friend_accepted`, the user who created the group or added the logged-in user for `group_added` |
-| `actor.user_id` | integer | User ID. For `friend_request`, use it as `user_id` in Accept Friend Request |
+| `actor.user_id` | integer | User ID of the actor. For `friend_request`, this is the sender's user ID, not the request ID |
 | `actor.username` | string | Username |
 | `actor.display_name` | string | Display name |
 | `actor.avatar_url` | string \| null | Avatar URL, null if not set, but always null now |
+| `request_id` | integer | Only for `friend_request`. ID required by the Accept Friend Request endpoint |
 | `conversation_id` | integer | Only for `group_added`. ID of the group conversation |
 | `group_name` | string | Only for `group_added`. Name of the group |
 
 The client should ignore a `notification_type` it does not know, so new types can be added later without breaking it.
 
 A `friend_request` notification is returned only while the request is still pending. If it was accepted, declined, or removed (for example because of a block), it is left out of the list.
+
+For `friend_request`, pass `payload.request_id` to the Accept Friend Request endpoint. Do not use `actor.user_id` or `notification_id` as the request ID.
 
 #### Error Responses
 

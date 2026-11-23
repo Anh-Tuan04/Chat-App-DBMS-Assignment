@@ -5,6 +5,7 @@ from typing import Any
 
 from modules.repositories.relationships import RelationshipRepository
 from modules.repositories.users import UserRepository
+from modules.services.notifications import NotificationService
 
 log = logging.getLogger(__name__)
 
@@ -16,9 +17,35 @@ def _format_utc_iso(dt) -> str:
 class RelationshipService:
     DEFAULT_LIMIT = 100
 
-    def __init__(self, relationships: RelationshipRepository, users: UserRepository):
+    def __init__(
+        self,
+        relationships: RelationshipRepository,
+        users: UserRepository,
+        notifications: NotificationService | None = None,
+    ):
         self._relationships = relationships
         self._users = users
+        self._notifications = notifications
+
+    def _notify_friend_request(self, user_id: int, request_id: int) -> None:
+        if self._notifications is None:
+            return
+        try:
+            _, err = self._notifications.notify_friend_request(user_id, request_id)
+            if err:
+                log.error("friend request notification failed: user=%s request=%s", user_id, request_id)
+        except Exception:
+            log.exception("friend request notification failed: user=%s request=%s", user_id, request_id)
+
+    def _notify_friend_accepted(self, user_id: int, friend_user_id: int) -> None:
+        if self._notifications is None:
+            return
+        try:
+            _, err = self._notifications.notify_friend_accepted(user_id, friend_user_id)
+            if err:
+                log.error("friend accepted notification failed: user=%s friend=%s", user_id, friend_user_id)
+        except Exception:
+            log.exception("friend accepted notification failed: user=%s friend=%s", user_id, friend_user_id)
 
     def get_friends(self, user_id: int) -> tuple[list[dict[str, Any]] | None, str | None]:
         try:
@@ -82,9 +109,13 @@ class RelationshipService:
             )
             if reverse_req is not None:
                 self._relationships.accept_request(reverse_req.request_id)
+                self._notify_friend_accepted(reverse_req.requester_id, user_id)
                 return None
 
-            self._relationships.send_request(requester_id=user_id, addressee_id=friend_id)
+            friend_request = self._relationships.send_request(
+                requester_id=user_id, addressee_id=friend_id
+            )
+            self._notify_friend_request(friend_id, friend_request.request_id)
             return None
         except PermissionError:
             return "Blocked"
@@ -118,7 +149,7 @@ class RelationshipService:
                         "request_id": req.request_id,
                         "requester_id": req.requester_id,
                         "requester_username": requester.username,
-                        "requester_display_name": requester.username,
+                        "requester_display_name": requester.display_name or requester.username,
                         "requester_avatar_url": requester.avatar_url,
                         "created_at": _format_utc_iso(req.created_at),
                     }
@@ -135,6 +166,7 @@ class RelationshipService:
                 return None, "No request with this id"
 
             self._relationships.accept_request(request_id)
+            self._notify_friend_accepted(req.requester_id, user_id)
             # Trả về ID của người gửi lời mời (friend_id) theo accept-friend-api.md
             return req.requester_id, None
         except LookupError:

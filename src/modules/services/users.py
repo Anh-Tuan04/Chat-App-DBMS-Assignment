@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterable
 from typing import Any
 
 from modules.repositories.relationships import RelationshipRepository
@@ -29,6 +30,27 @@ class UserService:
         except Exception:
             log.exception("get display names failed: ids=%s", ids)
             return {}
+
+    def get_public_profiles(
+        self, user_ids: Iterable[int]
+    ) -> tuple[dict[int, dict[str, Any]] | None, str | None]:
+        ids = {int(user_id) for user_id in user_ids}
+        if not ids:
+            return {}, None
+        try:
+            users = self._users.get_many(ids)
+            return {
+                user_id: {
+                    "user_id": user_id,
+                    "username": user.username,
+                    "display_name": user.display_name or user.username,
+                    "avatar_url": user.avatar_url,
+                }
+                for user_id, user in users.items()
+            }, None
+        except Exception:
+            log.exception("get public profiles failed: ids=%s", ids)
+            return None, "Internal server error"
 
     def search(
         self, prefix: str, current_user_id: int | None = None

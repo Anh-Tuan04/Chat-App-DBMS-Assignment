@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, jsonify, request, session
 
 from ..services.container import get_services
 from utils import error_response, login_required
@@ -9,79 +9,38 @@ notifications_bp = Blueprint('notifications_bp', __name__, url_prefix='/api/noti
 @notifications_bp.route('/', methods=['GET'])
 @login_required
 def get_notifications():
-    """
-    Get all unresolved notifications.
-    """
     user_id = session.get('user_id')
 
-    before = request.args.get('before', '', type=str)
-    if before:
-        limit = request.args.get('limit', 0, type=int)
-        if limit:
-            if not isinstance(limit, int):
-                return error_response('limit invalid', 400)
-            if limit < 1 or limit > 100:
-                return error_response('limit must be between 1 and 100', 400)
-        else: # empty limit, default 30
-            limit = 30
+    before_raw = request.args.get('before')
+    if before_raw is None:
+        before_notification_id = None
+    else:
+        try:
+            before_notification_id = int(before_raw)
+        except ValueError:
+            return error_response('before is not a valid notification ID', 400)
+        if before_notification_id <= 0:
+            return error_response('before is not a valid notification ID', 400)
 
-        # TODO: call service
-        # notifications, err = get_notifications_service(user_id, before=before, limit=limit)
-    
-    else: # no before set, default newest messages
-        # TODO: call service
-        # notifications, err = get_notifications_service(user_id)
-        pass
+    limit_raw = request.args.get('limit')
+    if limit_raw is None:
+        limit = 30
+    else:
+        try:
+            limit = int(limit_raw)
+        except ValueError:
+            return error_response('limit must be between 1 and 100', 400)
+        if not 1 <= limit <= 100:
+            return error_response('limit must be between 1 and 100', 400)
 
-    # if err:
-    #   return error_response('Internal server error', 500)
-
-    # hardcoded response
-    notifications = [
-        {
-            "notification_id": "1789432156738291900",
-            "notification_type": "friend_request",
-            "is_read": False,
-            "created_at": "2026-11-19T05:20:00Z",
-            "payload": {
-                "actor": {
-                    "user_id": 7,
-                    "username": "jane_doe",
-                    "display_name": "Jane Doe",
-                    "avatar_url": ""
-                }
-            }
-        },
-        {
-            "notification_id": "1789432156738291850",
-            "notification_type": "friend_accepted",
-            "is_read": True,
-            "created_at": "2026-11-18T10:02:00Z",
-            "payload": {
-                "actor": {
-                    "user_id": 12,
-                    "username": "johnny",
-                    "display_name": "Johnny Smith",
-                    "avatar_url": ""
-                }
-            }
-        },
-        {
-            "notification_id": "1789432156738291800",
-            "notification_type": "group_added",
-            "is_read": False,
-            "created_at": "2026-11-17T08:30:00Z",
-            "payload": {
-                "actor": {
-                    "user_id": 21,
-                    "username": "mike99",
-                    "display_name": "Mike",
-                    "avatar_url": ""
-                },
-                "conversation_id": 4,
-                "group_name": "Project Team"
-            }
-        }
-    ]
+    services = get_services()
+    # notifications = [...]  # Previous hardcoded response.
+    notifications, err = services.notifications.list_for_user_payload(
+        user_id, limit=limit, before_notification_id=before_notification_id
+    )
+    if err:
+        return error_response('Internal server error', 500)
+    if notifications is None:
+        return error_response('Internal server error', 500)
 
     return jsonify(notifications), 200
