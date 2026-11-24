@@ -4,6 +4,7 @@ import { realTimeSocket } from './real-time-socket.js';
 import { prepareFriendsModal } from "./top-right-bar/friends.js"
 import { prepareAddFriendModal } from "./top-right-bar/add-friend.js"
 import { prepareNotificationsModal } from "./top-right-bar/notifications.js"
+import { prepareBlockedUsersModal } from "./top-right-bar/blocked-users.js"
 import { initializeCreateGroup } from "./top-right-bar/create-group.js"
 import * as UserProfile from "./top-right-bar/user-profile.js"
 
@@ -26,6 +27,7 @@ const modalPreparers = {
   "friends-modal": prepareFriendsModal,
   "add-friend-modal": prepareAddFriendModal,
   "notifications-modal": prepareNotificationsModal,
+  "blocked-users-modal": prepareBlockedUsersModal,
   // "create-group-modal": initializeCreateGroup
 };
 

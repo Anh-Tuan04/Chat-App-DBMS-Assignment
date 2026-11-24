@@ -117,10 +117,17 @@ def on_message(data):
         'created_at': _iso(message.created_at),  # must be string
     }
     try:
-        member_ids.remove(int(user_id)) # ignore print sender in receiver array
+        member_ids_to_print = member_ids.copy()
+        member_ids_to_print.remove(int(user_id)) # ignore print sender in receiver array
     except ValueError:
         pass
     # Each member gets the message plus the sidebar row as they see it
     emit_message_to_members(outgoing, build_conversation_views(conversation, member_ids, profiles))
-    members = str(member_ids) if len(member_ids) <= 10 else str(member_ids[:10]) + '...'
+    members = str(member_ids_to_print) if len(member_ids_to_print) <= 10 else str(member_ids_to_print[:10]) + '...'
     print(f"User {user_id} sent to {members} message \"{text}\"")
+
+
+@socketio.on('delete_message')
+def on_delete_message(data):
+    pass
+

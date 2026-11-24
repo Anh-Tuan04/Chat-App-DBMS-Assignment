@@ -128,6 +128,17 @@
           </button>
 
           <button
+            class="topbar-action-btn blocked-users-btn"
+            id="blocked-users-btn"
+            data-modal-target="blocked-users-modal"
+            type="button"
+            title="Blocked Users"
+            aria-label="Blocked Users"
+          >
+            <span class="material-symbols-outlined">block</span>
+          </button>
+
+          <button
             class="topbar-action-btn notif-btn"
             id="notifications-btn"
             data-modal-target="notifications-modal"
@@ -308,6 +319,29 @@
             />
           </div>
           <div class="modal-results" id="friends-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Modal: Blocked Users ===== -->
+    <div
+      class="modal"
+      id="blocked-users-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="blocked-users-title"
+      hidden
+    >
+      <div class="modal-backdrop" data-close></div>
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 class="modal-title" id="blocked-users-title">Blocked users</h3>
+          <button class="modal-close" type="button" data-close title="Close">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="modal-results blocked-list" id="blocked-users-list"></div>
         </div>
       </div>
     </div>

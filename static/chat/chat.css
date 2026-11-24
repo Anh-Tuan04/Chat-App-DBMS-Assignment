@@ -1500,3 +1500,22 @@ img { display: block; }
 
 .btn-danger { background: transparent; color: var(--color-danger, #e5484d); border: 1px solid currentColor; }
 .btn-danger:hover:not(:disabled) { background: rgba(229, 72, 77, 0.12); }
+
+/* ---------- Blocked Users Component ---------- */
+.blocked-users-btn {
+  color: var(--color-text-muted);
+}
+
+.blocked-users-btn .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.blocked-list {
+  max-height: 22rem;
+  overflow-y: auto;
+}
+
+.blocked-load-more {
+  align-self: center;
+  margin-top: 0.5rem;
+}

@@ -9,8 +9,8 @@ from werkzeug.exceptions import HTTPException
 
 import logging
 
-# logging.getLogger("werkzeug").disabled = True
-# logging.getLogger("werkzeug").propagate = False
+logging.getLogger("werkzeug").disabled = True
+logging.getLogger("werkzeug").propagate = False
 
 BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")

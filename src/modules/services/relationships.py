@@ -193,6 +193,38 @@ class RelationshipService:
             log.exception("block_user failed: user=%s target=%s", user_id, target_id)
             return "Internal server error"
 
+    def get_blocked_users(
+        self, user_id: int, limit: int, before_block_id: int | None = None
+    ) -> tuple[list[dict[str, Any]] | None, str | None]:
+        """Danh sách người user đã chặn, mới chặn trước (block_id giảm dần).
+        Cursor: before_block_id = block_id của dòng cuối trang trước (get-blocked-user-api.md)."""
+        try:
+            blocks = self._relationships.list_blocked(user_id, limit, before_block_id)
+            if not blocks:
+                return [], None
+
+            user_map = self._users.get_many([b.blocked_id for b in blocks])
+
+            result: list[dict[str, Any]] = []
+            for b in blocks:
+                blocked = user_map.get(b.blocked_id)
+                if blocked is None:
+                    continue
+                result.append(
+                    {
+                        "block_id": b.block_id,
+                        "blocked_id": b.blocked_id,
+                        "blocked_username": blocked.username,
+                        "blocked_display_name": blocked.display_name or blocked.username,
+                        "blocked_avatar_url": blocked.avatar_url,
+                        "created_at": _format_utc_iso(b.created_at),
+                    }
+                )
+            return result, None
+        except Exception:
+            log.exception("get_blocked_users failed: user=%s", user_id)
+            return None, "Internal server error"
+
     def unblock_user(self, user_id: int, target_id: int) -> str | None:
         try:
             if not self._relationships.has_blocked(user_id, target_id):

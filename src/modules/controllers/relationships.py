@@ -98,6 +98,38 @@ def accept_friend_request():
     return jsonify(friend_id=friend_id), 200
 
 
+@blocks_bp.route('', methods=['GET'])
+@login_required
+def blocked_users():
+    """Get the list of users the logged-in user has blocked, newest block first"""
+    user_id = session.get('user_id')
+
+    # limit: default 50, 1..100
+    limit_raw = request.args.get('limit', '', type=str)
+    limit = 50
+    if limit_raw:
+        try:
+            limit = int(limit_raw)
+        except ValueError:
+            return error_response('limit must be between 1 and 100', 400)
+    if limit < 1 or limit > 100:
+        return error_response('limit must be between 1 and 100', 400)
+
+    # before: block_id of the last row already on screen (next page)
+    before_raw = request.args.get('before', '', type=str)
+    before_id = None
+    if before_raw:
+        try:
+            before_id = int(before_raw)
+        except ValueError:
+            return error_response('before is not a valid block_id', 400)
+
+    users, err = get_services().relationships.get_blocked_users(user_id, limit, before_id)
+    if err:
+        return error_response('Internal server error', 500)
+    return jsonify(users), 200
+
+
 @blocks_bp.route('', methods=['POST', 'DELETE'])
 @login_required
 def blocks():
