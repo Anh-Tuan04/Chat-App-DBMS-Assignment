@@ -71,7 +71,7 @@
     });
   }
 
-  // Prevent default submit (hook up your auth call here)
+  // Submit: log in, save the user, go to the chat page
   if (loginForm) {
     loginForm.addEventListener('submit', async function (event) {
       event.preventDefault();
@@ -105,11 +105,6 @@
         } catch (error) {
           showToast('An error occurred during login', 'error');
         }
-
-      // Once the auth call is wired up, report the outcome with:
-      //   showToast('Welcome back!', 'success');
-      //   showToast(errorMessage || 'Login failed', 'error');
-      // (make this handler `async` if you use await)
     });
   }
 

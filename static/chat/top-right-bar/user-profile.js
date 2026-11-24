@@ -6,12 +6,6 @@ const BASE_URL = 'http://localhost:5000'; // Replace with your actual backend UR
 
 const userAvatar = document.querySelector('.user-avatar');
 
-// const currentUser = {
-//   id: localStorage.getItem('userId') || '1', // Default to '1' if not found
-//   name: localStorage.getItem('userName') || 'Alex Mercer', // Default to 'Alex Mercer' if not found
-//   role: { label: 'Lead', variant: 'lead' }
-// };
-
 const currentUser = JSON.parse(
   localStorage.getItem('user') || '{}'
 );

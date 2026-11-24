@@ -1584,16 +1584,7 @@ img { display: block; }
 
 .friend-row {
   cursor: pointer;
-  /* transition: background-color 0.15s ease, border-color 0.15s ease;
-  border: 1px solid transparent; */
 }
-
-/* Modifier state: is-active */
-/* .friend-row.is-active,
-.friend-row.is-active:hover {
-  background: var(--color-active-bg);
-  border-color: var(--color-border-strong);
-} */
 
 .friend-avatar-wrap {
   position: relative;

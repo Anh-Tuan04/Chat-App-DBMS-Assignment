@@ -110,7 +110,7 @@
     });
   }
 
-  // Prevent default submit (hook up your sign-up call here)
+  // Submit: register, save the user, go to the chat page
   if (registerForm) {
     registerForm.addEventListener('submit', async function (event) {
       event.preventDefault();
@@ -120,7 +120,6 @@
 
   
       try {
-        // Call your sign-up function here
         let res = await fetch(`/api/auth/register`, {
           method: 'POST',
           credentials: 'include', // Include cookies for session management
