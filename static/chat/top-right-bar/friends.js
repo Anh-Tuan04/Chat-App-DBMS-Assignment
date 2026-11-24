@@ -1,6 +1,6 @@
 import { showError } from '../error.js';
 import { showToast } from '../toast.js';
-import { openChatWithUser } from '../chat-area/messages.js';
+import { openChatWithUser } from '../chat-area/messages-actions.js';
 import { realTimeSocket } from '../real-time-socket.js';
 
 /* Friends list.

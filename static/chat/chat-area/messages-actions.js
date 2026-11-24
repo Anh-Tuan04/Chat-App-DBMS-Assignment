@@ -213,7 +213,7 @@ export const openConversation = async (conversationItem) => {
 // A user was picked (sidebar search row, friends modal). No request is sent:
 //   - the sidebar already has a conversation with this user -> open it, return true
 //   - otherwise -> empty composer ready for a NEW chat (the first message creates the
-//     conversation, see messages.js), return false
+//     conversation, see messages-actions.js), return false
 export const openChatWithUser = ({ userId, name }) => {
     const existingItem = findConversationItemByReceiverId(userId);
     if (existingItem) {

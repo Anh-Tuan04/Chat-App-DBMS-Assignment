@@ -155,14 +155,18 @@ class MySQLNotificationRepository(NotificationRepository):
             with conn.cursor() as cursor:
                 cursor.execute(
                     """
-                    SELECT notification_id
-                    FROM notifications
-                    WHERE user_id = %s AND is_read = FALSE
-                    LIMIT %s
+                    SELECT COUNT(*) AS cnt
+                    FROM (
+                        SELECT 1
+                        FROM notifications
+                        WHERE user_id = %s AND is_read = FALSE
+                        LIMIT %s
+                    ) AS t
                     """,
                     (user_id, cap),
                 )
-                return len(cursor.fetchall())
+                row = cursor.fetchone()
+                return int(row["cnt"]) if row else 0
         except pymysql.MySQLError as exc:
             raise Unavailable("MySQL unavailable during count unread notifications") from exc
         finally:

@@ -2,7 +2,7 @@ import { showError } from "./error.js"
 
 /* The sidebar conversation list ONLY: rows, rendering, preview, unread badge.
    Opening a conversation, loading messages, scrolling and marking read are in
-   chat-area/messages.js, which imports from this file (never the other way round). */
+   chat-area/messages-actions.js, which imports from this file (never the other way round). */
 
 /*
 <div class="conversation-item [is-active]" data-conversation-id="c1">
@@ -243,7 +243,7 @@ export function addConversationItem(conversation) {
 
 
 // Updates the preview and the time of a row and moves it to the top. No unread badge.
-// Used for your own sent message (messages.js) and, through handleNewMessageComing, for incoming ones.
+// Used for your own sent message (messages-actions.js) and, through handleNewMessageComing, for incoming ones.
 // Returns false when the row is not in the list.
 export function updateConversationPreview({ conversationId, message, createAt }) {
     const item = Array.from(conversationList.children).find(

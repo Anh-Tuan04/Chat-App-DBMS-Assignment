@@ -21,6 +21,9 @@ services:
   cassandra:
     image: cassandra:latest
     container_name: my-cassandra
+    environment:
+          MAX_HEAP_SIZE: 512M
+          HEAP_NEWSIZE: 128M
     ports:
       - 9042:9042
     volumes:
