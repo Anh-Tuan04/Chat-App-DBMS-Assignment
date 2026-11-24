@@ -2,6 +2,7 @@ from flask import session
 from flask_socketio import emit
 from ..extensions import socketio
 from ..emitters.conversations import build_conversation_views, emit_message_to_members
+from ..emitters.messages import emit_delete_message_for_me, emit_recall_message
 from modules.services.container import get_services
 
 
@@ -127,7 +128,118 @@ def on_message(data):
     print(f"User {user_id} sent to {members} message \"{text}\"")
 
 
-@socketio.on('delete_message')
-def on_delete_message(data):
-    pass
+# ====================================================================== delete messages
 
+def _emit_delete_error(action, message, data=None):
+    """Tell ONLY the requesting socket that a delete failed. message_id is echoed so the
+    client can put that message back to normal."""
+    data = data if isinstance(data, dict) else {}
+    emit('delete_message_error', {
+        'status': 'error',
+        'action': action,                    # "delete_for_me" | "recall"
+        'message': message,
+        'conversation_id': str(data.get('conversation_id') or ''),
+        'message_id': str(data.get('message_id') or ''),
+    })
+
+
+def _parse_delete_request(data):
+    """Returns (user_id, conversation_id, message_id, err). Both ids arrive as strings."""
+    if not isinstance(data, dict):
+        return None, None, None, 'Data must be a json object'
+    user_id = session.get('user_id')
+    if not user_id:
+        return None, None, None, 'Not logged in'
+    if data.get('conversation_id') in (None, '') or data.get('message_id') in (None, ''):
+        return None, None, None, 'conversation_id and message_id are required'
+    try:
+        conversation_id = int(data.get('conversation_id'))
+        message_id = int(data.get('message_id'))
+    except (TypeError, ValueError):
+        return None, None, None, 'conversation_id and message_id must be integers'
+    return int(user_id), conversation_id, message_id, None
+
+
+def _member_ids(services, conversation, user_id):
+    """Every member of the conversation, the actor included. Returns (ids, err)."""
+    if conversation.type == 'direct':
+        return [user_id, conversation.other_member(user_id)], None
+    if conversation.type == 'group':
+        members, err = services.conversations.list_members(user_id, conversation.conversation_id, limit=100)
+        if err or members is None:
+            return None, err or 'Internal server error'
+        ids = [member['user_id'] for member in members]
+        if user_id not in ids:
+            ids.append(user_id)
+        return ids, None
+    return None, f'Unknown conversation type: {conversation.type}'
+
+
+@socketio.on('delete_message_for_me')
+def on_delete_message_for_me(data):
+    """Hide one message for the logged-in user only. Other members still see it.
+
+    data (sent by the client, plain emit, no ack):
+        { "conversation_id": "3", "message_id": "1354263578912345678" }
+
+    message_deleted_for_me (to every tab of this user): see emitters.messages.emit_delete_message_for_me
+    delete_message_error (only to the requesting socket):
+        { "status": "error", "action": "delete_for_me", "message": "...", "conversation_id": "3", "message_id": "..." }
+    """
+    user_id, conversation_id, message_id, err = _parse_delete_request(data)
+    if err:
+        return _emit_delete_error('delete_for_me', err, data)
+
+    _, err = get_services().messages.delete_for_me(user_id, conversation_id, message_id)
+    if err:
+        return _emit_delete_error('delete_for_me', err, data)
+
+    emit_delete_message_for_me(user_id, conversation_id, message_id)
+
+
+@socketio.on('recall_message')
+def on_recall_message(data):
+    """Delete one message for everyone. Only its sender may do it.
+
+    data (sent by the client, plain emit, no ack):
+        { "conversation_id": "3", "message_id": "1354263578912345678" }
+
+    message_recalled (to every member, the sender included): see emitters.messages.emit_recall_message
+    delete_message_error (only to the requesting socket):
+        { "status": "error", "action": "recall", "message": "...", "conversation_id": "3", "message_id": "..." }
+    """
+    user_id, conversation_id, message_id, err = _parse_delete_request(data)
+    if err:
+        return _emit_delete_error('recall', err, data)
+
+    services = get_services()
+
+    conversation, err = services.conversations.get_for_member(conversation_id, user_id)
+    if err or conversation is None:
+        return _emit_delete_error('recall', err or 'Internal server error', data)
+
+    # Read the members BEFORE deleting, so a failure here leaves the message untouched
+    member_ids, err = _member_ids(services, conversation, user_id)
+    if err:
+        return _emit_delete_error('recall', err, data)
+
+    _, err = services.messages.recall_message(user_id, conversation_id, message_id)
+    if err:
+        return _emit_delete_error('recall', err, data)
+
+    # From here the message is gone. The new sidebar preview is optional: without it the
+    # clients keep their preview, so a failure is not an error for the sender.
+    latest_message, has_latest_message = None, False
+    summary, err = services.conversations.get_summary(user_id, conversation_id)
+    if not err and summary is not None:
+        has_latest_message = True
+        last = summary.last_message
+        if last is not None:
+            latest_message = {
+                'message_id': str(last.message_id),
+                'sender_id': last.sender_id,
+                'content': last.content,
+                'created_at': _iso(last.sent_at),
+            }
+
+    emit_recall_message(member_ids, conversation_id, message_id, user_id, latest_message, has_latest_message)

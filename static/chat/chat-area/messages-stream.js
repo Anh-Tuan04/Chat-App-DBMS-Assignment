@@ -360,6 +360,26 @@ const attachmentFactories = {
 
 /*
 HTML Skeleton Reference:
+<button class="message-menu-btn" type="button" data-action="open-message-menu"
+        title="More options" aria-label="More options" aria-haspopup="menu">
+  <span class="material-symbols-outlined">more_horiz</span>
+</button>
+*/
+// The "..." button shown on hover. message-delete-actions.js opens the menu when it is clicked.
+const createMessageMenuButton = () => {
+  const button = document.createElement('button');
+  button.classList.add('message-menu-btn');
+  button.type = 'button';
+  button.dataset.action = 'open-message-menu';
+  button.title = 'More options';
+  button.setAttribute('aria-label', 'More options');
+  button.setAttribute('aria-haspopup', 'menu');
+  button.appendChild(createIcon({ name: 'more_horiz' }));
+  return button;
+};
+
+/*
+HTML Skeleton Reference:
 <div class="message [message-new] [message-own] " data-message-id="...">
   <div class="message-avatar-wrap">...</div>
   <div class="message-body">
@@ -367,6 +387,8 @@ HTML Skeleton Reference:
     <p class="message-text [has-attachment]">...</p>
     <!-- optional: code-block | file-card | image-card -->
   </div>
+  <button class="message-menu-btn" type="button" data-action="open-message-menu">...</button>
+  <!-- added by message-delete-actions.js while open: <div class="message-menu">...</div> -->
 </div>
 */
 const createMessage = ({
@@ -390,6 +412,7 @@ const createMessage = ({
   message.dataset.messageId = id;
   message.appendChild(createMessageAvatar({ author, avatarUrl, initials, status }));
   message.appendChild(body);
+  message.appendChild(createMessageMenuButton());
   return message;
 };
 

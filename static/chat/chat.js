@@ -6,9 +6,10 @@ import { prepareAddFriendModal } from "./top-right-bar/add-friend.js"
 import { prepareNotificationsModal } from "./top-right-bar/notifications.js"
 import { prepareBlockedUsersModal } from "./top-right-bar/blocked-users.js"
 import { initializeCreateGroup } from "./top-right-bar/create-group.js"
-import * as UserProfile from "./top-right-bar/user-profile.js"
+import  { replaceAvatarWithInitials } from "./top-right-bar/user-profile.js"
 
 import { messageStreamElement } from "./chat-area/messages.js"
+import './chat-area/message-delete-actions.js';   // message menu: delete for you / for everyone
 
 import './sidebar-search.js';
 
@@ -73,7 +74,7 @@ document.addEventListener('keydown', function (event) {
 
 
 getConversations();
-
+replaceAvatarWithInitials();
 
 /*
     <!-- ===== Error stack ===== -->

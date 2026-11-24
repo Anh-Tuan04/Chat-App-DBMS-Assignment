@@ -257,6 +257,18 @@ export function updateConversationPreview({ conversationId, message, createAt })
     return true;
 }
 
+// Replaces the preview and the time of a row WITHOUT moving it (a deleted message is not
+// new activity). message = null: the conversation has no message left.
+// Returns false when the row is not in the list.
+export function setConversationPreview({ conversationId, message, createAt }) {
+    const item = findConversationItem(conversationId);
+    if (!item) return false;
+
+    item.querySelector('.conversation-preview').textContent = message ?? 'No messages yet';
+    item.querySelector('.conversation-time').textContent = message ? formatConversationTime(createAt) : '';
+    return true;
+}
+
 // A message from someone else for a conversation that is not open:
 // update the row, make it bold and add 1 to its unread badge.
 // conversation: the `conversation` of the socket payload, used to draw the row when the

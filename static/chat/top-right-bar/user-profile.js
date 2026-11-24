@@ -16,6 +16,13 @@ const currentUser = JSON.parse(
   localStorage.getItem('user') || '{}'
 );
 
+const getInitials = (name = '') => {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
+
 const userMenuItems = [
   { id: 'profile', label: 'Profile', icon: 'person' },
   { id: 'settings', label: 'Settings', icon: 'settings' },
@@ -113,6 +120,58 @@ function createUserMenu() {
 
 const userMenu = createUserMenu();
 
+/* ---------- Top bar avatar: photo, else initials, else the person icon ---------- */
+// The user saved at login / register: localStorage 'user' = { user_id, username, display_name, avatar_url }
+
+/*
+HTML Skeleton Reference:
+<span class="user-avatar-initials">JD</span>
+*/
+function createAvatarInitials(initials) {
+  return createElement('span', 'user-avatar-initials', initials);
+}
+
+/*
+HTML Skeleton Reference:
+<img class="user-avatar-img" src="https://example.com/avatar.png" alt="Jane Doe" />
+*/
+function createAvatarImage(src, alt, fallbackInitials) {
+  const img = createElement('img', 'user-avatar-img');
+  img.src = src;
+  img.alt = alt;
+  // Broken link: show the initials instead of an empty circle
+  img.addEventListener('error', function () {
+    img.replaceWith(fallbackInitials ? createAvatarInitials(fallbackInitials) : createIcon('person'));
+  });
+  return img;
+}
+
+/*
+HTML Skeleton Reference (content of .user-avatar):
+<div class="user-avatar" title="Jane Doe (@jane_doe)">
+  <img class="user-avatar-img" src="..." alt="Jane Doe" />     <!-- avatar_url in localStorage -->
+     or <span class="user-avatar-initials">JD</span>             <!-- a username / display name -->
+     or <span class="material-symbols-outlined">person</span>    <!-- nothing stored: as in chat.html -->
+</div>
+*/
+// chat.js calls it once at start-up
+function replaceAvatarWithInitials() {
+  const name = currentUser.display_name || currentUser.username || '';
+  const initials = getInitials(name);
+  if (!name) return;   // no user stored: keep the person icon from chat.html
+
+  userAvatar.title = currentUser.username && currentUser.username !== name
+    ? name + ' (@' + currentUser.username + ')'
+    : name;
+  userAvatar.setAttribute('aria-label', 'Account menu for ' + name);
+
+  if (currentUser.avatar_url) {
+    userAvatar.replaceChildren(createAvatarImage(currentUser.avatar_url, name, initials));
+  } else {
+    userAvatar.replaceChildren(createAvatarInitials(initials));
+  }
+}
+
 /*
 HTML Skeleton Reference (added to .topbar-right):
 <div class="user-menu" id="user-menu" role="menu" hidden>
@@ -121,6 +180,21 @@ HTML Skeleton Reference (added to .topbar-right):
 */
 document.querySelector('.topbar-right').appendChild(userMenu);
 
+/*
+    <div
+      class="user-avatar"
+      data-menu-toggle="user-menu"
+      role="button"
+      tabindex="0"
+      aria-haspopup="menu"
+      aria-controls="user-menu"
+      aria-expanded="false"
+    >
+      <span class="material-symbols-outlined">...</span>
+      or
+      <span>AM</span>
+    </div>
+*/
 // Make the avatar a keyboard-reachable trigger without touching the HTML
 userAvatar.dataset.menuToggle = 'user-menu';
 userAvatar.setAttribute('role', 'button');
@@ -128,6 +202,7 @@ userAvatar.setAttribute('tabindex', '0');
 userAvatar.setAttribute('aria-haspopup', 'menu');
 userAvatar.setAttribute('aria-controls', 'user-menu');
 userAvatar.setAttribute('aria-expanded', 'false');
+
 
 function setUserMenuOpen(isOpen) {
   userMenu.hidden = !isOpen;
@@ -191,3 +266,6 @@ document.addEventListener('keydown', function (event) {
     setUserMenuOpen(userMenu.hidden);
   }
 });
+
+
+export { replaceAvatarWithInitials };

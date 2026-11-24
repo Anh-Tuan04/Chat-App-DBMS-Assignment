@@ -495,6 +495,20 @@ img { display: block; }
 
 .user-avatar .material-symbols-outlined { font-size: 18px; }
 
+.user-avatar-initials {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.user-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 9999px;
+  object-fit: cover;
+}
+
 /* ---------- Chat panel ---------- */
 .chat-main {
   width: 100%;
@@ -571,6 +585,124 @@ img { display: block; }
 .message:hover { background: var(--color-hover-bg); }
 
 .message-new { animation: message-fade-in 0.2s ease; }
+
+/* ---------- Message menu ("..." button + delete menu, see chat-area/message-delete-actions.js) ---------- */
+.message.has-menu-open {
+  z-index: 5;                         /* the menu stays above the next messages */
+  background: var(--color-hover-bg);
+}
+
+.message.is-deleting {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.message-menu-btn {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.5rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  background: var(--color-card-bg);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+
+.message-own .message-menu-btn { right: auto; left: 0.5rem; }
+
+.message:hover .message-menu-btn,
+.message.has-menu-open .message-menu-btn,
+.message-menu-btn:focus-visible { opacity: 1; }
+
+.message-menu-btn:hover { background: var(--color-active-bg); color: var(--color-text); }
+.message-menu-btn .material-symbols-outlined { font-size: 18px; }
+
+.message-menu {
+  position: absolute;
+  top: 2.25rem;
+  right: 0.5rem;
+  z-index: 10;
+  width: 15rem;
+  padding: 0.375rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  background: var(--color-card-bg);
+  box-shadow: var(--shadow-lg);
+  text-align: left;
+  animation: modal-pop 0.15s ease;
+}
+
+.message-own .message-menu { right: auto; left: 0.5rem; }
+
+.message-menu.opens-up { top: auto; bottom: calc(100% - 0.25rem); }
+
+.message-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.25rem 0.25rem 0.375rem 0.625rem;
+  margin-bottom: 0.25rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.message-menu-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.message-menu-close {
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 0.375rem;
+  background: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.message-menu-close:hover { background: var(--color-active-bg); color: var(--color-text); }
+.message-menu-close .material-symbols-outlined { font-size: 18px; }
+
+.message-menu-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  width: 100%;
+  padding: 0.5rem 0.625rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: none;
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.message-menu-item:hover:not(:disabled),
+.message-menu-item:focus-visible { background: var(--color-active-bg); outline: none; }
+.message-menu-item .material-symbols-outlined { font-size: 18px; color: var(--color-text-muted); }
+
+.message-menu-item.is-danger,
+.message-menu-item.is-danger .material-symbols-outlined { color: var(--color-error); }
+.message-menu-item.is-danger:hover:not(:disabled) { background: var(--color-error-bg); }
+
+.message-menu-item:disabled { opacity: 0.45; cursor: default; }
+
+.message-menu-text { display: flex; flex-direction: column; min-width: 0; }
+.message-menu-label { font-size: 13px; line-height: 18px; font-weight: 600; }
+.message-menu-hint { font-size: 11px; line-height: 15px; color: var(--color-text-subtle); }
 
 @keyframes message-fade-in {
   from { opacity: 0; transform: translateY(4px); }
