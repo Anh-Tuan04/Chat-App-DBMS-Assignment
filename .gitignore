@@ -1,0 +1,21 @@
+.vscode
+.pycache
+.venv
+__pycache__/
+*.py[cod]
+*.env
+.env
+.pytest_cache/
+.temp_files
+.temp/
+
+# Node.js
+*node_modules/
+
+package-lock.json
+package.json
+
+*.zip
+
+*CLAUDE*
+.claude/

@@ -1,0 +1,265 @@
+import { realTimeSocket } from "../real-time-socket.js";
+import { showToast } from "../toast.js"
+import { showError } from "../error.js"
+/* Avatar menu (top right): Profile, Settings, Log out. Load after chat.js. */
+const BASE_URL = 'http://localhost:5000'; // Replace with your actual backend URL
+
+const userAvatar = document.querySelector('.user-avatar');
+
+const currentUser = JSON.parse(
+  localStorage.getItem('user') || '{}'
+);
+
+const getInitials = (name = '') => {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
+
+const userMenuItems = [
+  { id: 'profile', label: 'Profile', icon: 'person' },
+  { id: 'settings', label: 'Settings', icon: 'settings' },
+  { id: 'logout', label: 'Log out', icon: 'logout', isDanger: true, hasDividerAbove: true }
+];
+
+// What each entry does. Replace these bodies with your own UI logic.
+const userMenuActions = {
+  profile: function () { showToast('Profile selected'); },
+  settings: function () { showToast('Settings selected'); },
+  logout: async function () { await logout(); }
+};
+
+
+/*
+HTML Skeleton Reference:
+<tag class="className">text</tag>   <!-- class and text are optional -->
+*/
+function createElement(tag, className, text) {
+  const element = document.createElement(tag);
+  if (className) element.className = className;
+  if (text) element.textContent = text;
+  return element;
+}
+
+
+/*
+HTML Skeleton Reference:
+<span class="material-symbols-outlined [extra-class]">icon_name</span>
+*/
+function createIcon(name, extraClass) {
+  return createElement(
+    'span',
+    'material-symbols-outlined' + (extraClass ? ' ' + extraClass : ''),
+    name
+  );
+}
+
+/*
+HTML Skeleton Reference:
+<button class="user-menu-item [is-danger]" type="button" role="menuitem" data-menu-action="logout">
+  <span class="material-symbols-outlined">logout</span>
+  <span>Log out</span>
+</button>
+*/
+function createUserMenuItem(item) {
+  const button = createElement('button', 'user-menu-item' + (item.isDanger ? ' is-danger' : ''));
+  button.type = 'button';
+  button.setAttribute('role', 'menuitem');
+  button.dataset.menuAction = item.id;
+  button.appendChild(createIcon(item.icon));
+  button.appendChild(createElement('span', '', item.label));
+  return button;
+}
+
+/*
+HTML Skeleton Reference:
+<div class="user-menu-divider" role="separator"></div>
+*/
+function createUserMenuDivider() {
+  const divider = createElement('div', 'user-menu-divider');
+  divider.setAttribute('role', 'separator');
+  return divider;
+}
+
+/*
+HTML Skeleton Reference:
+<div class="user-menu" id="user-menu" role="menu" hidden>
+  <div class="user-menu-header">
+    <span class="user-menu-name">Alex Mercer</span>
+    <span class="user-menu-role">Lead</span>
+  </div>
+  <button class="user-menu-item" ...>...</button>
+  <div class="user-menu-divider" role="separator"></div>
+  <button class="user-menu-item is-danger" ...>...</button>
+</div>
+*/
+function createUserMenu() {
+  const header = createElement('div', 'user-menu-header');
+  header.appendChild(createElement('span', 'user-menu-name', currentUser.username));
+  header.appendChild(createElement('span', 'user-menu-role', 'User'));
+
+  const menu = createElement('div', 'user-menu');
+  menu.id = 'user-menu';
+  menu.setAttribute('role', 'menu');
+  menu.hidden = true;
+  menu.appendChild(header);
+
+  userMenuItems.forEach(function (item) {
+    if (item.hasDividerAbove) menu.appendChild(createUserMenuDivider());
+    menu.appendChild(createUserMenuItem(item));
+  });
+  return menu;
+}
+
+const userMenu = createUserMenu();
+
+/* ---------- Top bar avatar: photo, else initials, else the person icon ---------- */
+// The user saved at login / register: localStorage 'user' = { user_id, username, display_name, avatar_url }
+
+/*
+HTML Skeleton Reference:
+<span class="user-avatar-initials">JD</span>
+*/
+function createAvatarInitials(initials) {
+  return createElement('span', 'user-avatar-initials', initials);
+}
+
+/*
+HTML Skeleton Reference:
+<img class="user-avatar-img" src="https://example.com/avatar.png" alt="Jane Doe" />
+*/
+function createAvatarImage(src, alt, fallbackInitials) {
+  const img = createElement('img', 'user-avatar-img');
+  img.src = src;
+  img.alt = alt;
+  // Broken link: show the initials instead of an empty circle
+  img.addEventListener('error', function () {
+    img.replaceWith(fallbackInitials ? createAvatarInitials(fallbackInitials) : createIcon('person'));
+  });
+  return img;
+}
+
+/*
+HTML Skeleton Reference (content of .user-avatar):
+<div class="user-avatar" title="Jane Doe (@jane_doe)">
+  <img class="user-avatar-img" src="..." alt="Jane Doe" />     <!-- avatar_url in localStorage -->
+     or <span class="user-avatar-initials">JD</span>             <!-- a username / display name -->
+     or <span class="material-symbols-outlined">person</span>    <!-- nothing stored: as in chat.html -->
+</div>
+*/
+// chat.js calls it once at start-up
+function replaceAvatarWithInitials() {
+  const name = currentUser.display_name || currentUser.username || '';
+  const initials = getInitials(name);
+  if (!name) return;   // no user stored: keep the person icon from chat.html
+
+  userAvatar.title = currentUser.username && currentUser.username !== name
+    ? name + ' (@' + currentUser.username + ')'
+    : name;
+  userAvatar.setAttribute('aria-label', 'Account menu for ' + name);
+
+  if (currentUser.avatar_url) {
+    userAvatar.replaceChildren(createAvatarImage(currentUser.avatar_url, name, initials));
+  } else {
+    userAvatar.replaceChildren(createAvatarInitials(initials));
+  }
+}
+
+/*
+HTML Skeleton Reference (added to .topbar-right):
+<div class="user-menu" id="user-menu" role="menu" hidden>
+  ...same as createUserMenu()
+</div>
+*/
+document.querySelector('.topbar-right').appendChild(userMenu);
+
+/*
+    <div
+      class="user-avatar"
+      data-menu-toggle="user-menu"
+      role="button"
+      tabindex="0"
+      aria-haspopup="menu"
+      aria-controls="user-menu"
+      aria-expanded="false"
+    >
+      <span class="material-symbols-outlined">...</span>
+      or
+      <span>AM</span>
+    </div>
+*/
+// Make the avatar a keyboard-reachable trigger without touching the HTML
+userAvatar.dataset.menuToggle = 'user-menu';
+userAvatar.setAttribute('role', 'button');
+userAvatar.setAttribute('tabindex', '0');
+userAvatar.setAttribute('aria-haspopup', 'menu');
+userAvatar.setAttribute('aria-controls', 'user-menu');
+userAvatar.setAttribute('aria-expanded', 'false');
+
+
+function setUserMenuOpen(isOpen) {
+  userMenu.hidden = !isOpen;
+  userAvatar.setAttribute('aria-expanded', String(isOpen));
+}
+
+
+// handlers for user profile
+async function logout() {
+  // fetch logout, clear session
+  try {
+    const res = await fetch(`/api/auth/logout`, {
+      method: 'POST',
+      credentials: 'include', // Include cookies for session management
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({}),
+    });
+
+    if (res.ok) {
+      // Clear local storage
+      localStorage.clear();
+      realTimeSocket.disconnect(); // Disconnect the socket before redirecting
+      // Redirect to login page
+      window.location.replace('/');
+    } else {
+      const errorData = await res.json();
+      const errorMessage = errorData?.message || 'Logout failed';
+      showError(errorMessage);
+    }
+
+  } catch (error) {
+    showError('Logout failed: ' + error.message);
+
+  }
+}
+
+// One click listener for the whole menu: avatar toggles it, an item runs its
+// action (data-menu-action), and a click anywhere else closes it.
+document.addEventListener('click', async function (event) {
+  const item = event.target.closest('[data-menu-action]');
+  if (item) {
+    await userMenuActions[item.dataset.menuAction]();
+    setUserMenuOpen(false);
+    return;
+  }
+  if (event.target.closest('[data-menu-toggle]')) {
+    setUserMenuOpen(userMenu.hidden);
+    return;
+  }
+  if (!event.target.closest('.user-menu')) setUserMenuOpen(false);
+});
+
+// Esc closes it; Enter / Space on the focused avatar opens it
+document.addEventListener('keydown', function (event) {
+  if (event.key === 'Escape') {
+    setUserMenuOpen(false);
+  } else if ((event.key === 'Enter' || event.key === ' ') && event.target === userAvatar) {
+    event.preventDefault();
+    setUserMenuOpen(userMenu.hidden);
+  }
+});
+
+
+export { replaceAvatarWithInitials };
