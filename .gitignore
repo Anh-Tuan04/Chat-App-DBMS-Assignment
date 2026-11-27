@@ -19,3 +19,8 @@ package.json
 
 *CLAUDE*
 .claude/
+*.csv
+
+Document
+
+seed_common.py
